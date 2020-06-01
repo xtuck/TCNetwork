@@ -1,0 +1,6 @@
+framework module Pods_TCNetwork_Example {
+  umbrella header "Pods-TCNetwork_Example-umbrella.h"
+
+  export *
+  module * { export * }
+}

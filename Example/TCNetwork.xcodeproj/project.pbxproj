@@ -58,15 +58,15 @@
 		606FC2411953D9B200FFA9A0 /* Tests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Tests-Prefix.pch"; sourceTree = "<group>"; };
 		6A4EA2D73C440BC0926FECD0 /* Pods_TCNetwork_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_TCNetwork_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		71719F9E1E33DC2100824A3D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		75000643A79FB7B7B6C9988B /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; name = README.md; path = ../README.md; sourceTree = "<group>"; };
+		75000643A79FB7B7B6C9988B /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		753E3C7037E005CAB03530BA /* Pods_TCNetwork_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_TCNetwork_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7FB329ADC6647ACF2B709139 /* Pods-TCNetwork_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TCNetwork_Tests.release.xcconfig"; path = "Target Support Files/Pods-TCNetwork_Tests/Pods-TCNetwork_Tests.release.xcconfig"; sourceTree = "<group>"; };
 		83C4E69787CA7C82CA43AC1E /* Pods-TCNetwork_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TCNetwork_Example.release.xcconfig"; path = "Target Support Files/Pods-TCNetwork_Example/Pods-TCNetwork_Example.release.xcconfig"; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		9574580EE6C290D72842A14E /* Pods-TCNetwork_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TCNetwork_Tests.debug.xcconfig"; path = "Target Support Files/Pods-TCNetwork_Tests/Pods-TCNetwork_Tests.debug.xcconfig"; sourceTree = "<group>"; };
-		97FB1311F8C670140EAC10C5 /* TCNetwork.podspec */ = {isa = PBXFileReference; includeInIndex = 1; name = TCNetwork.podspec; path = ../TCNetwork.podspec; sourceTree = "<group>"; };
+		97FB1311F8C670140EAC10C5 /* TCNetwork.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = TCNetwork.podspec; path = ../TCNetwork.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		B52268F964B31F12B25700D2 /* Pods-TCNetwork_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TCNetwork_Example.debug.xcconfig"; path = "Target Support Files/Pods-TCNetwork_Example/Pods-TCNetwork_Example.debug.xcconfig"; sourceTree = "<group>"; };
-		F849C7224EBC000C256AECD5 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
+		F849C7224EBC000C256AECD5 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,7 +103,6 @@
 				9574580EE6C290D72842A14E /* Pods-TCNetwork_Tests.debug.xcconfig */,
 				7FB329ADC6647ACF2B709139 /* Pods-TCNetwork_Tests.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -258,6 +257,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
@@ -302,10 +302,16 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-TCNetwork_Example/Pods-TCNetwork_Example-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/AFNetworking/AFNetworking.framework",
+				"${BUILT_PRODUCTS_DIR}/Aspects/Aspects.framework",
+				"${BUILT_PRODUCTS_DIR}/MBProgressHUD/MBProgressHUD.framework",
 				"${BUILT_PRODUCTS_DIR}/TCNetwork/TCNetwork.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AFNetworking.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Aspects.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/MBProgressHUD.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/TCNetwork.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
