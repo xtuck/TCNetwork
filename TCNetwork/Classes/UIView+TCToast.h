@@ -18,7 +18,7 @@
 
 
 #import <UIKit/UIKit.h>
-#import "MBProgressHUD.h"
+#import <MBProgressHUD/MBProgressHUD.h>
 
 #define kToastDuration 2
 
