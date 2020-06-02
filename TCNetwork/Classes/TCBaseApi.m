@@ -7,6 +7,7 @@
 
 #import "TCBaseApi.h"
 #import "Aspects.h"
+#import <objc/runtime.h>
 
 typedef void (^ResponseSuccessBlock) (NSURLSessionDataTask *task, id response);
 typedef void (^ResponseFailureBlock) (NSURLSessionDataTask *task, NSError *error);
@@ -19,26 +20,6 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 
 @implementation TCBaseApi
 
-+ (NSString * (^)(NSString *,...))joinURL {
-    return ^(NSString *obj,...){
-        NSMutableArray *objs = [[NSMutableArray alloc] init];
-        if (obj) {
-            [objs addObject:obj];
-            va_list argumentList;
-            va_start(argumentList, obj);
-            NSObject *argument;
-            while ((argument = va_arg(argumentList, NSObject *))) {
-                [objs addObject:argument];
-            }
-            va_end(argumentList);
-        }
-        NSString *urlStr = @"";
-        for (NSString *str in objs) {
-            [urlStr stringByAppendingPathComponent:str];
-        }
-        return urlStr;
-    };
-}
 
 +(TCBaseApi * (^)(NSString *))apiInitURLFull {
     return ^(NSString * apiInitURLFull){
@@ -47,6 +28,16 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
         api.isShowErr = YES;
         api.httpMethod = TCHttp_POST;
         return api;
+    };
+}
+
++(TCBaseApi * (^)(NSString *,...))apiInitURLJoin {
+    return ^(NSString *str,...){
+        va_list args;
+        va_start(args, str);
+        NSString *resultUrl = NSString.joinURL_VL(str,args);
+        va_end(args);
+        return self.apiInitURLFull(resultUrl);
     };
 }
 
@@ -204,6 +195,10 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
         return;
     }
     _code = response[codeKey];
+    if ([_code isKindOfClass:NSNumber.class]) {
+        //为了统一格式
+        _code = [(NSNumber *)_code stringValue];
+    }
     NSString *msgKey = [self messageKey];
     if (msgKey.isNonEmpty) {
         _message = response[msgKey];
@@ -221,20 +216,51 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
         _httpResultOtherObject = response[otherObjectKey];
     }
 
+    Class clazz = self.propertyExtensionClass;
+    
+    if ((![clazz isMemberOfClass:TCBaseApi.class])
+        && [clazz isSubclassOfClass:TCBaseApi.class]
+        && [self isKindOfClass:clazz]) {
+        //对扩展的属性进行赋值
+        unsigned int count;
+        objc_property_t *propertyList = class_copyPropertyList(clazz, &count);
+        for (unsigned int i = 0; i < count; i++) {
+            const char *propertyName = property_getName(propertyList[i]);
+            NSString *pName = [NSString stringWithUTF8String:propertyName];
+            NSObject *value = _httpResponseObject[pName];
+            if (self.printLog) {
+                NSLog(@"扩展的属性：(%d) : %@ \n赋值：%@", i, pName, value.description);
+            }
+            [self setValue:value forKey:pName];
+        }
+        free(propertyList);
+    }
+
     //判断结果是否成功
     if(_code.isNonEmpty) {
-        NSArray *codes = nil;
-        codes = self.successCodeArray.count ? self.successCodeArray : [self successCodes];
-        if ([codes containsObject:_code]) {
+        NSArray *codes = self.successCodeArray.count ? self.successCodeArray : [self successCodes];
+        if ([self isContainsCode:_code arr:codes]) {
             //成功
             [self handleSuccess];
             return;
         }
     }
-    
     //失败
     NSError *error = [NSError responseResultError:_code msg:_message];
     [self handleError:error];
+}
+
+- (BOOL)isContainsCode:(NSString *)code arr:(NSArray *)codes {
+    for (int i=0; i<codes.count; i++) {
+        NSString *codeStr = codes[i];
+        if ([codeStr isKindOfClass:NSNumber.class]) {
+            codeStr = [(NSNumber *)codeStr stringValue];
+        }
+        if ([code isEqualToString:codeStr]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (void)handleSuccess {
@@ -250,7 +276,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     }
     
     if (self.loadOnView) {
-        if (![self customTostHide:self.loadOnView]) {
+        if (![self hideCustomTost:self.loadOnView]) {
             [self.loadOnView toastHide];
         }
     }
@@ -273,11 +299,11 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
         NSLog(@"http error:  %@", error);
     }
     if (self.loadOnView) {
-        if (![self customTostHide:self.loadOnView]) {
+        if (![self hideCustomTost:self.loadOnView]) {
             [self.loadOnView toastHide];
         }
         if (self.isShowErr) {
-            if (_code.isNonEmpty && [self.ignoreErrToastCodes containsObject:_code]) {
+            if (_code.isNonEmpty &&  [self isContainsCode:_code arr:self.ignoreErrToastCodes]) {
                 if (self.printLog) {
                     NSLog(@"忽略了一个错误提示:  %@", _code);
                 }
@@ -288,7 +314,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
                 } else if ([error isKindOfClass:NSError.class]){
                     errMsg = error.errorMessage;
                 }
-                if (![self customTost:self.loadOnView text:errMsg]) {
+                if (![self showCustomTost:self.loadOnView text:errMsg]) {
                     [UIView.appWindow toastWithText:errMsg];
                 }
             }
@@ -317,7 +343,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     }
     
     if (self.loadOnView) {
-        if (![self customTostLoading:self.loadOnView]) {
+        if (![self showCustomTostLoading:self.loadOnView]) {
             [self.loadOnView toastLoading];
         }
     }
@@ -405,14 +431,14 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 #pragma mark -----子类可重写，进行自定义设置
 
 #pragma mark --是否使用自定义toast
-- (BOOL)customTost:(UIView *)onView text:(NSString *)text {
+- (BOOL)showCustomTost:(UIView *)onView text:(NSString *)text {
     return NO;
 }
 //自定义数据加载中的提示框样式
-- (BOOL)customTostLoading:(UIView *)onView {
+- (BOOL)showCustomTostLoading:(UIView *)onView {
     return NO;
 }
-- (BOOL)customTostHide:(UIView *)onView {
+- (BOOL)hideCustomTost:(UIView *)onView {
     return NO;
 }
 
@@ -441,6 +467,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 }
 
 
+//以下是默认配置，子类可重写
 - (NSString *)codeKey {
     return @"code";
 }
@@ -467,7 +494,12 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 }
 
 - (NSArray *)ignoreErrToastCodes {
+    //取消请求的错误码是-999
     return @[@"-999"];
+}
+
+- (Class)propertyExtensionClass {
+    return nil;
 }
 
 @end

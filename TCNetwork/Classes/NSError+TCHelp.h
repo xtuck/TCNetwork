@@ -29,6 +29,7 @@ typedef NS_ENUM(NSInteger,TCCustomApiErrorCode) {
 
 + (NSError *)responseResultError:(NSString *)code msg:(NSString *)msg;
 
+//自定义构造error
 + (NSError *)errorCode:(NSString *)code msg:(NSString *)msg;
 
 @end

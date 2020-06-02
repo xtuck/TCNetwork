@@ -24,6 +24,10 @@
 		6003F5BC195388D20070C39A /* Tests.m in Sources */ = {isa = PBXBuildFile; fileRef = 6003F5BB195388D20070C39A /* Tests.m */; };
 		71719F9F1E33DC2100824A3D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */; };
 		873B8AEB1B1F5CCA007FD442 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 873B8AEA1B1F5CCA007FD442 /* Main.storyboard */; };
+		960F7FED2486006B00333B1F /* MyBaseApi.m in Sources */ = {isa = PBXBuildFile; fileRef = 960F7FEC2486006B00333B1F /* MyBaseApi.m */; };
+		960F7FF02486058E00333B1F /* CheckVersionApi.m in Sources */ = {isa = PBXBuildFile; fileRef = 960F7FEF2486058E00333B1F /* CheckVersionApi.m */; };
+		960F7FF32486243000333B1F /* LoginApi.m in Sources */ = {isa = PBXBuildFile; fileRef = 960F7FF22486243000333B1F /* LoginApi.m */; };
+		960F7FF62486A3A900333B1F /* TCViewControllerDemo.m in Sources */ = {isa = PBXBuildFile; fileRef = 960F7FF52486A3A900333B1F /* TCViewControllerDemo.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,6 +68,17 @@
 		83C4E69787CA7C82CA43AC1E /* Pods-TCNetwork_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TCNetwork_Example.release.xcconfig"; path = "Target Support Files/Pods-TCNetwork_Example/Pods-TCNetwork_Example.release.xcconfig"; sourceTree = "<group>"; };
 		873B8AEA1B1F5CCA007FD442 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		9574580EE6C290D72842A14E /* Pods-TCNetwork_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TCNetwork_Tests.debug.xcconfig"; path = "Target Support Files/Pods-TCNetwork_Tests/Pods-TCNetwork_Tests.debug.xcconfig"; sourceTree = "<group>"; };
+		960F7FEB2486006B00333B1F /* MyBaseApi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MyBaseApi.h; sourceTree = "<group>"; };
+		960F7FEC2486006B00333B1F /* MyBaseApi.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MyBaseApi.m; sourceTree = "<group>"; };
+		960F7FEE2486058E00333B1F /* CheckVersionApi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CheckVersionApi.h; sourceTree = "<group>"; };
+		960F7FEF2486058E00333B1F /* CheckVersionApi.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CheckVersionApi.m; sourceTree = "<group>"; };
+		960F7FF12486243000333B1F /* LoginApi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LoginApi.h; sourceTree = "<group>"; };
+		960F7FF22486243000333B1F /* LoginApi.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LoginApi.m; sourceTree = "<group>"; };
+		960F7FF42486A3A900333B1F /* TCViewControllerDemo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TCViewControllerDemo.h; sourceTree = "<group>"; };
+		960F7FF52486A3A900333B1F /* TCViewControllerDemo.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TCViewControllerDemo.m; sourceTree = "<group>"; };
+		960F7FF72486D32800333B1F /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/LaunchScreen.strings"; sourceTree = "<group>"; };
+		960F7FF82486D32800333B1F /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		960F7FF92486D32800333B1F /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		97FB1311F8C670140EAC10C5 /* TCNetwork.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = TCNetwork.podspec; path = ../TCNetwork.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		B52268F964B31F12B25700D2 /* Pods-TCNetwork_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TCNetwork_Example.debug.xcconfig"; path = "Target Support Files/Pods-TCNetwork_Example/Pods-TCNetwork_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		F849C7224EBC000C256AECD5 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
@@ -148,6 +163,14 @@
 				873B8AEA1B1F5CCA007FD442 /* Main.storyboard */,
 				6003F5A5195388D20070C39A /* TCViewController.h */,
 				6003F5A6195388D20070C39A /* TCViewController.m */,
+				960F7FF42486A3A900333B1F /* TCViewControllerDemo.h */,
+				960F7FF52486A3A900333B1F /* TCViewControllerDemo.m */,
+				960F7FEB2486006B00333B1F /* MyBaseApi.h */,
+				960F7FEC2486006B00333B1F /* MyBaseApi.m */,
+				960F7FEE2486058E00333B1F /* CheckVersionApi.h */,
+				960F7FEF2486058E00333B1F /* CheckVersionApi.m */,
+				960F7FF12486243000333B1F /* LoginApi.h */,
+				960F7FF22486243000333B1F /* LoginApi.m */,
 				71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */,
 				6003F5A8195388D20070C39A /* Images.xcassets */,
 				6003F594195388D20070C39A /* Supporting Files */,
@@ -247,6 +270,9 @@
 				LastUpgradeCheck = 0720;
 				ORGANIZATIONNAME = xtuck;
 				TargetAttributes = {
+					6003F589195388D20070C39A = {
+						DevelopmentTeam = N8KL6M5NSM;
+					};
 					6003F5AD195388D20070C39A = {
 						TestTargetID = 6003F589195388D20070C39A;
 					};
@@ -260,6 +286,7 @@
 				English,
 				en,
 				Base,
+				"zh-Hans",
 			);
 			mainGroup = 6003F581195388D10070C39A;
 			productRefGroup = 6003F58B195388D20070C39A /* Products */;
@@ -304,6 +331,7 @@
 				"${PODS_ROOT}/Target Support Files/Pods-TCNetwork_Example/Pods-TCNetwork_Example-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/AFNetworking/AFNetworking.framework",
 				"${BUILT_PRODUCTS_DIR}/Aspects/Aspects.framework",
+				"${BUILT_PRODUCTS_DIR}/CocoaSecurity/CocoaSecurity.framework",
 				"${BUILT_PRODUCTS_DIR}/MBProgressHUD/MBProgressHUD.framework",
 				"${BUILT_PRODUCTS_DIR}/TCNetwork/TCNetwork.framework",
 			);
@@ -311,6 +339,7 @@
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/AFNetworking.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Aspects.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/CocoaSecurity.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/MBProgressHUD.framework",
 				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/TCNetwork.framework",
 			);
@@ -371,8 +400,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				6003F59E195388D20070C39A /* TCAppDelegate.m in Sources */,
+				960F7FED2486006B00333B1F /* MyBaseApi.m in Sources */,
+				960F7FF32486243000333B1F /* LoginApi.m in Sources */,
 				6003F5A7195388D20070C39A /* TCViewController.m in Sources */,
+				960F7FF02486058E00333B1F /* CheckVersionApi.m in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
+				960F7FF62486A3A900333B1F /* TCViewControllerDemo.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -399,6 +432,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				6003F597195388D20070C39A /* en */,
+				960F7FF82486D32800333B1F /* zh-Hans */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -407,6 +441,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				6003F5B9195388D20070C39A /* en */,
+				960F7FF92486D32800333B1F /* zh-Hans */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -415,6 +450,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				71719F9E1E33DC2100824A3D /* Base */,
+				960F7FF72486D32800333B1F /* zh-Hans */,
 			);
 			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
@@ -500,6 +536,7 @@
 			baseConfigurationReference = B52268F964B31F12B25700D2 /* Pods-TCNetwork_Example.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = N8KL6M5NSM;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "TCNetwork/TCNetwork-Prefix.pch";
 				INFOPLIST_FILE = "TCNetwork/TCNetwork-Info.plist";
@@ -516,6 +553,7 @@
 			baseConfigurationReference = 83C4E69787CA7C82CA43AC1E /* Pods-TCNetwork_Example.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = N8KL6M5NSM;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "TCNetwork/TCNetwork-Prefix.pch";
 				INFOPLIST_FILE = "TCNetwork/TCNetwork-Info.plist";

@@ -18,7 +18,7 @@
 @implementation UIView (TCToast)
 
 - (BOOL)isEmptyStr:(NSString *)str {
-    if (nil == str || ![self isKindOfClass:[NSString class]]) {
+    if (nil == str || ![str isKindOfClass:[NSString class]]) {
         return YES;
     }
     return ([[str stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] == 0);
@@ -33,7 +33,7 @@
     objc_setAssociatedObject(self, @selector(isToastLoading), @(isToastLoading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
-//toast是否会自动延迟隐藏
+//toast是否会自动延迟隐藏，避免在调用toastHide的时候，被提前隐藏了
 - (BOOL)isHudDelayHide {
     NSNumber *delayHide = objc_getAssociatedObject(self, _cmd);
     return delayHide.boolValue;
@@ -51,45 +51,26 @@
 - (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay {
     if (![self isEmptyStr:text]) {
         MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self animated:YES];
-        hud.contentColor = [UIColor whiteColor];
-        hud.bezelView.backgroundColor = [UIColor blackColor];
-        hud.bezelView.style = MBProgressHUDBackgroundStyleBlur;
-        hud.userInteractionEnabled = NO;
         hud.mode = MBProgressHUDModeText;
         hud.label.numberOfLines = 0;
-        [hud hideAnimated:YES afterDelay:delay];
-
         hud.label.text = text;
+        hud.userInteractionEnabled = NO;
+        [hud hideAnimated:YES afterDelay:delay];
         hud.isHudDelayHide = YES;
     }
 }
 
-- (void)toastWithText:(NSString *)text hud:(MBProgressHUD *)customHud {
-    if (![self isEmptyStr:text]) {
-        customHud.label.text = text;
-        customHud.isHudDelayHide = YES;
-    }
-}
 
 - (void)toastLoading {
     [self toastLoadingWithText:nil];
 }
 
 - (void)toastLoadingWithText:(NSString *)text {
-    [self toastLoadingWithText:text hud:nil];
-}
-
-- (void)toastLoadingWithHud:(MBProgressHUD *)customHud {
-    [self toastLoadingWithText:nil hud:customHud];
-}
-
-- (void)toastLoadingWithText:(NSString *)text hud:(MBProgressHUD *)customHud {
     if (self.isToastLoading) {
-        [customHud hideAnimated:NO];
         return;
     }
     self.isToastLoading = YES;
-    MBProgressHUD *hud = customHud ? : [MBProgressHUD showHUDAddedTo:self animated:YES];
+    MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self animated:YES];
     if (![self isEmptyStr:text]) {
         hud.label.text = text;
     }

@@ -15,10 +15,12 @@ PODS:
   - AFNetworking/UIKit (3.2.1):
     - AFNetworking/NSURLSession
   - Aspects (1.4.1)
+  - CocoaSecurity (1.2.4)
   - MBProgressHUD (1.2.0)
   - TCNetwork (0.1.0):
     - AFNetworking
     - Aspects
+    - CocoaSecurity
     - MBProgressHUD
 
 DEPENDENCIES:
@@ -28,6 +30,7 @@ SPEC REPOS:
   https://github.com/cocoapods/specs.git:
     - AFNetworking
     - Aspects
+    - CocoaSecurity
     - MBProgressHUD
 
 EXTERNAL SOURCES:
@@ -37,8 +40,9 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AFNetworking: b6f891fdfaed196b46c7a83cf209e09697b94057
   Aspects: 7595ba96a6727a58ebcbfc954497fc5d2fdde546
+  CocoaSecurity: d288a6f87e0f363823d2cb83e753814a6944f71a
   MBProgressHUD: 3ee5efcc380f6a79a7cc9b363dd669c5e1ae7406
-  TCNetwork: 2bf3793734b7692f78da1fc2edd810ca93cb2343
+  TCNetwork: 435d114ab5dbc9c61babb5118ca98a98fe52feaa
 
 PODFILE CHECKSUM: 53464c31f466c5ab1ca621be8fa0da698b4bbc55
 

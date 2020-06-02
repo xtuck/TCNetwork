@@ -48,10 +48,10 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 
 @property (nonatomic,copy) InterceptorBlock interceptorBlock;
 
-@property (nonatomic,strong) NSMutableDictionary *params;
+@property (nonatomic,strong) NSMutableDictionary *params;//执行http请求时传的参数
 @property (nonatomic,assign) NSUInteger filesCount;//作用：当同时上传多张图片时，可能需要设置更长的超时时间
 @property (nonatomic,strong) NSArray *successCodeArray;//作用：用来判断返回结果是否是成功的结果，优先级高于successCodes方法
-@property (nonatomic,weak) id delegate;
+@property (nonatomic,weak) id delegate;//作用：对象销毁后，其中的所有http请求都会自动取消
 @property (nonatomic,weak) UIView *loadOnView;
 @property (nonatomic,assign) BOOL isShowErr;//发生错误时，是否显示toast提示,默认YES,即显示错误提示
 @property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
@@ -59,20 +59,21 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 
 @property (nonatomic,readonly) NSURLSessionDataTask *httpTask;
 @property (nonatomic,readonly) BOOL isRequesting;//是否正在请求中
+
 @property (nonatomic,readonly) id httpResponseObject;//http返回的原始数据
+@property (nonatomic,readonly) NSError *httpError;
+
 @property (nonatomic,readonly) id httpResultDataObject;//http返回数据中的data对象
 @property (nonatomic,readonly) id httpResultOtherObject;//http返回数据中的其他对象
-@property (nonatomic,readonly) NSError *httpError;
 @property (nonatomic,readonly) NSString *code;
 @property (nonatomic,readonly) NSString *message;
 @property (nonatomic,readonly) NSString *currenttime;
 
 
-//类方法，拼接URL
-+ (NSString * (^)(NSString *,...))joinURL;
-
-//初始化
+//初始化，传入拼接好的url
 +(TCBaseApi * (^)(NSString *))apiInitURLFull;
+//传入url各个组成部分，最后的参数需要传nil
++(TCBaseApi * (^)(NSString *,...))apiInitURLJoin;
 
 //参数设置
 -(TCBaseApi * (^)(UIView *))l_loadOnView;
@@ -96,9 +97,9 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 -(TCBaseApi * (^)(TCHttpMethod method))l_httpMethod;
 
 
-//执行请求
+//执行请求，请放在链式语法的最末尾
 
-//需要接受http返回的原始数据，调用此方法
+//需要接受http返回的原始数据，调用此方法。  ************** 解析时，只会对 httpResponseObject 和 httpError 赋值 **************
 -(TCBaseApi * (^)(FinishBlock))apiCallOriginal;
 
 //返回的response结果是httpResultDataObject
@@ -114,12 +115,12 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 
 
 
-//不重写的话，使用我的默认样式
-- (BOOL)customTost:(UIView *)onView text:(NSString *)text;
+//不重写的话，使用默认样式
+- (BOOL)showCustomTost:(UIView *)onView text:(NSString *)text;
 //自定义数据加载中的提示框样式
-- (BOOL)customTostLoading:(UIView *)onView;
+- (BOOL)showCustomTostLoading:(UIView *)onView;
 //隐藏Loading提示框
-- (BOOL)customTostHide:(UIView *)onView;
+- (BOOL)hideCustomTost:(UIView *)onView;
 
 
 //默认情况只在debug模式下打印日志，可在子类中重写此方法，来控制日志的打印
@@ -135,7 +136,7 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 - (void)configRequestParams:(NSMutableDictionary *)params;
 
 
-//以下方法，子类重写，以便适应自己的后台数据
+//以下方法，子类重写，以便适配自己的后台返回的数据
 - (NSString *)codeKey;
 
 - (NSString *)messageKey;
@@ -151,5 +152,10 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 
 //忽略错误提示信息的code数组，某些请求失败后，不想显示提示信息
 - (NSArray *)ignoreErrToastCodes;
+
+//子类中扩展属性，在解析http返回的数据时，可以对扩展的属性进行赋值.
+//必须是TCBaseApi的子类,且是当前调用者类或者其父类
+//父类中存在的属性，子类中就不要再加了
+- (Class)propertyExtensionClass;
 
 @end

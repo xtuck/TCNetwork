@@ -20,7 +20,7 @@
 #import <UIKit/UIKit.h>
 #import "MBProgressHUD.h"
 
-#define kToastDuration 1.5
+#define kToastDuration 2
 
 @interface UIView (TCToast)
 
@@ -29,15 +29,10 @@
 
 - (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay;
 
-//自定义时候记得要设置此方法:[customHud hideAnimated:YES afterDelay:delay];
-- (void)toastWithText:(NSString *)text hud:(MBProgressHUD *)customHud;
-
 
 - (void)toastLoading;
 
 - (void)toastLoadingWithText:(NSString *)text;
-
-- (void)toastLoadingWithHud:(MBProgressHUD *)customHud;
 
 - (void)toastHide;
 

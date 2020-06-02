@@ -42,5 +42,6 @@ TODO: Add long description of the pod here.
    s.dependency 'AFNetworking'
    s.dependency 'MBProgressHUD'
    s.dependency 'Aspects'
+   s.dependency 'CocoaSecurity'
 
 end
