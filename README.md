@@ -33,6 +33,12 @@ TCNetwork is available under the MIT license. See the LICENSE file for more info
 大部分用法都在代码注释中和Demo注释中
 后期我会完善说明文档
 demo中的数据我都是测试完毕后，才将敏感信息改了，请自行使用真实的服务器配置信息进行调试
+Https请求调不通的时候，需要在info.plist中配置    
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+</dict>
 
 ## 待扩展
 1，JSON转model
