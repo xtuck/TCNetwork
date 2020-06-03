@@ -18,15 +18,15 @@
 @implementation LoginApi
 
 + (NSString *)baseUrl {
-   return @"https://www.xxxxxxxxxxxx.com";
+   return @"https://xxxxxxxxxxxxxxxxx";
 }
 
 - (NSString *)kSignSecret {
-    return @"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+    return @"xxxxxxxxxxxxxxxxx";
 }
 
 - (NSString *)kSignKey {
-    return @"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+    return @"xxxxxxxxxxxxxxxxx";
 }
 
 - (NSArray *)successCodes {
@@ -35,10 +35,17 @@
 
 - (void)configHttpManager:(AFHTTPSessionManager *)manager {
     [super configHttpManager:manager];
-    [manager.requestSerializer setValue:@"student" forHTTPHeaderField:@"Api-Requested-With"];
+    //发送请求的格式为form格式,也是默认的序列化器
+    manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+}
+
+- (void)configRequestHeaders:(NSMutableDictionary *)headers {
+    [super configRequestHeaders:headers];
+    [headers setValue:@"student" forKey:@"Api-Requested-With"];
 }
 
 - (void)configRequestParams:(NSMutableDictionary *)params {
+    [super configRequestParams:params];
     NSArray *allKeys = params.allKeys;
     NSArray *sortArray = [allKeys sortedArrayUsingSelector:@selector(compare:)];
     NSString *signString = [[NSString alloc] init];

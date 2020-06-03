@@ -12,7 +12,7 @@
 @implementation MyBaseApi
 
 + (NSString *)baseUrl {
-    return @"http://xxxxxxxxxx:8181";
+    return @"http://xxxxxxxxxxxxxxxxx";
 }
 
 - (NSString *)codeKey {
@@ -37,8 +37,10 @@
     manager.requestSerializer.timeoutInterval = 10;
 }
 
-- (void)configRequestParams:(NSMutableDictionary *)params {
-    
+- (void)configRequestParams:(NSObject *)params {
+}
+
+- (void)configRequestHeaders:(NSMutableDictionary *)headers {
 }
 
 - (BOOL)printLog {
@@ -60,7 +62,7 @@
 }
 
 
-
+//自己的基类扩展了属性
 - (Class)propertyExtensionClass {
     return MyBaseApi.class;
 }

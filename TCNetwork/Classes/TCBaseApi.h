@@ -48,7 +48,7 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 
 @property (nonatomic,copy) InterceptorBlock interceptorBlock;
 
-@property (nonatomic,strong) NSMutableDictionary *params;//执行http请求时传的参数
+@property (nonatomic,strong) NSObject *params;//执行http请求时传的参数
 @property (nonatomic,assign) NSUInteger filesCount;//作用：当同时上传多张图片时，可能需要设置更长的超时时间
 @property (nonatomic,strong) NSArray *successCodeArray;//作用：用来判断返回结果是否是成功的结果，优先级高于successCodes方法
 @property (nonatomic,weak) id delegate;//作用：对象销毁后，其中的所有http请求都会自动取消
@@ -79,7 +79,7 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 -(TCBaseApi * (^)(UIView *))l_loadOnView;
 -(TCBaseApi * (^)(UIView *, BOOL))l_loadOnView_isShowErr;
 -(TCBaseApi * (^)(id delegate))l_delegate;
--(TCBaseApi * (^)(NSMutableDictionary *))l_params;
+-(TCBaseApi * (^)(NSObject *))l_params;
 
 //作用：当同时上传多张图片时，可能需要设置更长的超时时间
 -(TCBaseApi * (^)(NSUInteger))l_filesCount;
@@ -99,7 +99,8 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 
 //执行请求，请放在链式语法的最末尾
 
-//需要接受http返回的原始数据，调用此方法。  ************** 解析时，只会对 httpResponseObject 和 httpError 赋值 **************
+//需要接受http返回的原始数据，调用此方法。
+//************** 解析时，只会对 httpResponseObject 和 httpError 赋值 **************
 -(TCBaseApi * (^)(FinishBlock))apiCallOriginal;
 
 //返回的response结果是httpResultDataObject
@@ -133,7 +134,12 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 - (void)configHttpManager:(AFHTTPSessionManager *)manager;
 
 //可重写该方法，然后对params进行签名加密等配置
-- (void)configRequestParams:(NSMutableDictionary *)params;
+//params类型与设置参数时传入的类型保持一致
+//通过mutableCopy传入子类的为可变类型对象:NSMutableDictionary，NSMutableString，NSMutableData
+- (void)configRequestParams:(NSObject *)params;
+
+//自AFNetworking 4.0后，请求参数中可以传入headers了，也可以继续沿用旧版本对manager进行设置headers
+- (void)configRequestHeaders:(NSMutableDictionary *)headers;
 
 
 //以下方法，子类重写，以便适配自己的后台返回的数据

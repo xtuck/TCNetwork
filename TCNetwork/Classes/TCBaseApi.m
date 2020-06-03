@@ -93,8 +93,8 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 }
 
 
--(TCBaseApi * (^)(NSMutableDictionary *))l_params {
-    return ^(NSMutableDictionary *l_params){
+-(TCBaseApi * (^)(NSObject *))l_params {
+    return ^(NSObject *l_params){
         self.params = l_params;
         return self;
     };
@@ -228,10 +228,10 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
             const char *propertyName = property_getName(propertyList[i]);
             NSString *pName = [NSString stringWithUTF8String:propertyName];
             NSObject *value = _httpResponseObject[pName];
-            if (self.printLog) {
-                NSLog(@"扩展的属性：(%d) : %@ \n赋值：%@", i, pName, value.description);
-            }
             [self setValue:value forKey:pName];
+            if (self.printLog) {
+                NSLog(@"扩展的属性：(%d) : %@  赋值：%@", i, pName, value.description);
+            }
         }
         free(propertyList);
     }
@@ -355,13 +355,9 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     if (!self.params) {
         self.params = [NSMutableDictionary dictionary];
     }
-    NSMutableDictionary *postParams = [self.params mutableCopy];
+    NSObject *postParams = [self.params mutableCopy];
     [self configRequestParams:postParams];
     
-    if (self.printLog) {
-        NSLog(@"Request header: %@\n path: %@\n params: %@",[TCHttpManager sharedAFManager].requestSerializer.HTTPRequestHeaders , self.URLFull, postParams);
-    }
-
     //下面的block中需要用self，延长实例生命周期
     ResponseSuccessBlock success = ^(NSURLSessionDataTask *task, id response) {
         [self handleResponse:response];
@@ -369,10 +365,15 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     ResponseFailureBlock failure = ^(NSURLSessionDataTask *task, NSError *error) {
         [self handleError:error];
     };
+    
+    NSMutableDictionary *headers = [NSMutableDictionary dictionary];
+    [self configRequestHeaders:headers];
+    
     if (self.multipartBlock) {
         //只有post支持上传文件
         _httpTask = [[TCHttpManager sharedAFManager] POST:self.URLFull
                                                parameters:postParams
+                                                  headers:headers
                                 constructingBodyWithBlock:self.multipartBlock
                                                  progress:self.uploadProgressBlock
                                                   success:success
@@ -380,25 +381,51 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     } else {
         switch (self.httpMethod) {
             case TCHttp_POST:
-                _httpTask = [[TCHttpManager sharedAFManager] POST:self.URLFull parameters:postParams progress:self.uploadProgressBlock success:success failure:failure];
+                _httpTask = [[TCHttpManager sharedAFManager] POST:self.URLFull
+                                                       parameters:postParams
+                                                          headers:headers
+                                                         progress:self.uploadProgressBlock
+                                                          success:success
+                                                          failure:failure];
                 break;
             case TCHttp_GET:
-                _httpTask = [[TCHttpManager sharedAFManager] GET:self.URLFull parameters:postParams progress:self.downloadProgressBlock success:success failure:failure];
+                _httpTask = [[TCHttpManager sharedAFManager] GET:self.URLFull
+                                                      parameters:postParams
+                                                         headers:headers
+                                                        progress:self.downloadProgressBlock
+                                                         success:success
+                                                         failure:failure];
                 break;
             case TCHttp_PUT:
-                _httpTask = [[TCHttpManager sharedAFManager] PUT:self.URLFull parameters:postParams success:success failure:failure];
+                _httpTask = [[TCHttpManager sharedAFManager] PUT:self.URLFull
+                                                      parameters:postParams
+                                                         headers:headers
+                                                         success:success
+                                                         failure:failure];
                 break;
             case TCHttp_DELETE:
-                _httpTask = [[TCHttpManager sharedAFManager] DELETE:self.URLFull parameters:postParams success:success failure:failure];
+                _httpTask = [[TCHttpManager sharedAFManager] DELETE:self.URLFull
+                                                         parameters:postParams
+                                                            headers:headers
+                                                            success:success
+                                                            failure:failure];
                 break;
             case TCHttp_PATCH:
-                _httpTask = [[TCHttpManager sharedAFManager] PATCH:self.URLFull parameters:postParams success:success failure:failure];
+                _httpTask = [[TCHttpManager sharedAFManager] PATCH:self.URLFull
+                                                        parameters:postParams
+                                                           headers:headers
+                                                           success:success
+                                                           failure:failure];
                 break;
             case TCHttp_HEAD: {
                 HEADPATCHSuccessBlock hpSuccess = ^(NSURLSessionDataTask *task) {
                     success(task,@"success");
                 };
-                _httpTask = [[TCHttpManager sharedAFManager] HEAD:self.URLFull parameters:postParams success:hpSuccess failure:failure];
+                _httpTask = [[TCHttpManager sharedAFManager] HEAD:self.URLFull
+                                                       parameters:postParams
+                                                          headers:headers
+                                                          success:hpSuccess
+                                                          failure:failure];
             }
                 break;
             default:
@@ -408,6 +435,10 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
         }
     }
     [self autoCancelTask];
+    
+    if (self.printLog) {
+        NSLog(@"Request header: %@\n path: %@\n params: %@",_httpTask.currentRequest.allHTTPHeaderFields, self.URLFull, postParams);
+    }
 }
 
 - (void)autoCancelTask {
@@ -458,12 +489,12 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 //普通请求都是单个请求，图片上传是多个图片一起上传，需要设置更长的超时时间
 - (void)configHttpManager:(AFHTTPSessionManager *)manager {
     manager.requestSerializer.timeoutInterval = kHttpRequestTimeoutInterval*(self.filesCount>1?self.filesCount:1);
-    //设置header等信息，例如
-    //[manager.requestSerializer setValue:@"xxxxx" forHTTPHeaderField:@"xxxxxxxx"];
-    //[manager.requestSerializer setValue:@"xxxxx" forHTTPHeaderField:@"token"];
 }
 
-- (void)configRequestParams:(NSMutableDictionary *)params {
+- (void)configRequestParams:(NSObject *)params {
+}
+
+- (void)configRequestHeaders:(NSMutableDictionary *)headers {
 }
 
 

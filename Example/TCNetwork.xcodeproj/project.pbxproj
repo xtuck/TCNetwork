@@ -28,6 +28,7 @@
 		960F7FF02486058E00333B1F /* CheckVersionApi.m in Sources */ = {isa = PBXBuildFile; fileRef = 960F7FEF2486058E00333B1F /* CheckVersionApi.m */; };
 		960F7FF32486243000333B1F /* LoginApi.m in Sources */ = {isa = PBXBuildFile; fileRef = 960F7FF22486243000333B1F /* LoginApi.m */; };
 		960F7FF62486A3A900333B1F /* TCViewControllerDemo.m in Sources */ = {isa = PBXBuildFile; fileRef = 960F7FF52486A3A900333B1F /* TCViewControllerDemo.m */; };
+		960F7FFC2486E97A00333B1F /* CoinLoginApi.m in Sources */ = {isa = PBXBuildFile; fileRef = 960F7FFB2486E97A00333B1F /* CoinLoginApi.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -79,6 +80,8 @@
 		960F7FF72486D32800333B1F /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/LaunchScreen.strings"; sourceTree = "<group>"; };
 		960F7FF82486D32800333B1F /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		960F7FF92486D32800333B1F /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		960F7FFA2486E97A00333B1F /* CoinLoginApi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoinLoginApi.h; sourceTree = "<group>"; };
+		960F7FFB2486E97A00333B1F /* CoinLoginApi.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CoinLoginApi.m; sourceTree = "<group>"; };
 		97FB1311F8C670140EAC10C5 /* TCNetwork.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = TCNetwork.podspec; path = ../TCNetwork.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		B52268F964B31F12B25700D2 /* Pods-TCNetwork_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TCNetwork_Example.debug.xcconfig"; path = "Target Support Files/Pods-TCNetwork_Example/Pods-TCNetwork_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		F849C7224EBC000C256AECD5 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
@@ -171,6 +174,8 @@
 				960F7FEF2486058E00333B1F /* CheckVersionApi.m */,
 				960F7FF12486243000333B1F /* LoginApi.h */,
 				960F7FF22486243000333B1F /* LoginApi.m */,
+				960F7FFA2486E97A00333B1F /* CoinLoginApi.h */,
+				960F7FFB2486E97A00333B1F /* CoinLoginApi.m */,
 				71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */,
 				6003F5A8195388D20070C39A /* Images.xcassets */,
 				6003F594195388D20070C39A /* Supporting Files */,
@@ -404,6 +409,7 @@
 				960F7FF32486243000333B1F /* LoginApi.m in Sources */,
 				6003F5A7195388D20070C39A /* TCViewController.m in Sources */,
 				960F7FF02486058E00333B1F /* CheckVersionApi.m in Sources */,
+				960F7FFC2486E97A00333B1F /* CoinLoginApi.m in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
 				960F7FF62486A3A900333B1F /* TCViewControllerDemo.m in Sources */,
 			);
@@ -491,7 +497,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -524,7 +530,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;

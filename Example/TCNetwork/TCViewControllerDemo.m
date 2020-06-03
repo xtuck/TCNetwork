@@ -26,6 +26,7 @@
         //api需要先实例化后，才能被block捕获，或者使用__block修饰CheckVersionApi *api
         api.l_delegate(self).l_loadOnView(self.view).apiCall(^(id resObject,NSError *error){
             NSDictionary *originalResObj = api.httpResponseObject;
+            [UIView.appWindow toastWithText:originalResObj.description hideAfterDelay:5];
             NSLog(@"原始数据为：\n%@",originalResObj.description);
         });
     });

@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 //扩展的属性，对应http请求返回的字典里面的key
 //请根据自己的业务场景进行修改
 @property (nonatomic,copy) NSString *errorMsg;
-@property (nonatomic,copy) NSString *msg;
+@property (nonatomic,copy) NSString *msg;//此属性与父类的message同意义，没有必要，此处只是为了演示
 @property (nonatomic,copy) NSArray *list;
 
 + (NSString *)baseUrl;
