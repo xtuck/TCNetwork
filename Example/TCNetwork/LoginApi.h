@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface LoginApi : MyBaseApi
 
-+ (TCBaseApi *)loginWithUsername:(NSString *)username pwd:(NSString *)pwd;
++ (LoginApi *)loginWithUsername:(NSString *)username pwd:(NSString *)pwd;
 
 @end
 

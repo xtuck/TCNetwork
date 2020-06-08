@@ -24,7 +24,7 @@ typedef NS_ENUM(NSUInteger, TCHttpMethod) {
 
 typedef void (^SuccessBlock) (id response);
 typedef void (^SuccessVoidBlock) (void);//success 回调不带参数，减少代码量
-typedef void (^FinishBlock) (id response,NSError * error);
+typedef void (^FinishBlock) (id response,NSError *error);
 typedef void (^NetWorkBlock) (BOOL netConnetState);  //暂时未使用
 typedef NSError * (^InterceptorBlock) (id response);  //接口返回成功数据处理拦截器
 

@@ -60,7 +60,7 @@
 
 
 //登录接口
-+ (TCBaseApi *)loginWithUsername:(NSString *)username pwd:(NSString *)pwd {
++ (LoginApi *)loginWithUsername:(NSString *)username pwd:(NSString *)pwd {
     NSMutableDictionary *param = NSMutableDictionary.maker;
     param.addKV(@"loginName",username);
     param.addKV(@"password",[CocoaSecurity md5:pwd].hexLower);
@@ -68,7 +68,7 @@
     //参数设置时，如果初始化时和接口调用时都设置了同一个参数，则以最后设置的为最终设置，比如下面设置了.l_loadOnView(UIView.appWindow)
     //但是调用的时候又设置了.l_loadOnView(self.view)，所以最后loading框会显示在self.view上
     
-    return self.apiInitURLJoin(self.baseUrl,@"/user/login",nil).l_params(param).l_loadOnView(UIView.appWindow)
+    return (LoginApi *)self.apiInitURLJoin(self.baseUrl,@"/user/login",nil).l_params(param).l_loadOnView(UIView.appWindow)
     .l_interceptorBlock(^NSError *(NSDictionary *res){
         //此处举例说明interceptorBlock的用法
         //res是登录成功返回的信息，但是在业务逻辑上可能需要判断用户角色或身份是否可以在当前客户端登录
