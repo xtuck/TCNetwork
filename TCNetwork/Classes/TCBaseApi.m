@@ -16,6 +16,26 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 
 @interface TCBaseApi()
 
+@property (nonatomic,copy) NSString *URLFull;
+@property (nonatomic,copy) SuccessBlock successBlock;
+@property (nonatomic,copy) FinishBlock finishBlock;
+
+///直接返回http请求返回的原始的response和(checkHttpCanRequest返回的error或发起请求后返回的error)，优先级高于以上2个block
+@property (nonatomic,copy) FinishBlock originalFinishBlock;
+
+@property (nonatomic,copy) MultipartBlock multipartBlock;
+@property (nonatomic,copy) UploadProgressBlock uploadProgressBlock;
+@property (nonatomic,copy) DownloadProgressBlock downloadProgressBlock;
+
+@property (nonatomic,copy) InterceptorBlock interceptorBlock;
+
+@property (nonatomic,strong) NSObject *params;//执行http请求时传的参数
+@property (nonatomic,strong) NSArray *successCodeArray;//作用：用来判断返回结果是否是成功的结果，优先级高于successCodes方法
+@property (nonatomic,weak) id delegate;//作用：对象销毁后，其中的所有http请求都会自动取消
+@property (nonatomic,weak) UIView *loadOnView;
+@property (nonatomic,assign) BOOL isShowErr;//发生错误时，是否显示toast提示,默认YES,即显示错误提示
+@property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
+
 @end
 
 @implementation TCBaseApi
@@ -100,13 +120,6 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     };
 }
 
--(TCBaseApi * (^)(NSUInteger))l_filesCount {
-    return ^(NSUInteger l_filesCount){
-        self.filesCount = l_filesCount;
-        return self;
-    };
-}
-
 -(TCBaseApi * (^)(NSArray *))l_successCodeArray {
     return ^(NSArray *l_successCodeArray){
         self.successCodeArray = l_successCodeArray;
@@ -140,14 +153,6 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 -(TCBaseApi * (^)(SuccessBlock))apiCallSuccess {
     return ^(SuccessBlock l_successBlock){
         self.successBlock = l_successBlock;
-        [self prepareRequest];
-        return self;
-    };
-}
-
--(TCBaseApi * (^)(SuccessVoidBlock))apiCallSuccessVoid {
-    return ^(SuccessVoidBlock l_successVoidBlock){
-        self.successVoidBlock = l_successVoidBlock;
         [self prepareRequest];
         return self;
     };
@@ -216,26 +221,6 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
         _httpResultOtherObject = response[otherObjectKey];
     }
 
-    Class clazz = self.propertyExtensionClass;
-    
-    if ((![clazz isMemberOfClass:TCBaseApi.class])
-        && [clazz isSubclassOfClass:TCBaseApi.class]
-        && [self isKindOfClass:clazz]) {
-        //对扩展的属性进行赋值
-        unsigned int count;
-        objc_property_t *propertyList = class_copyPropertyList(clazz, &count);
-        for (unsigned int i = 0; i < count; i++) {
-            const char *propertyName = property_getName(propertyList[i]);
-            NSString *pName = [NSString stringWithUTF8String:propertyName];
-            NSObject *value = _httpResponseObject[pName];
-            [self setValue:value forKey:pName];
-            if (self.printLog) {
-                NSLog(@"扩展的属性：(%d) : %@  赋值：%@", i, pName, value.description);
-            }
-        }
-        free(propertyList);
-    }
-
     //判断结果是否成功
     if(_code.isNonEmpty) {
         NSArray *codes = self.successCodeArray.count ? self.successCodeArray : [self successCodes];
@@ -281,9 +266,6 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
         }
     }
 
-    if (self.successVoidBlock) {
-        self.successVoidBlock();
-    }
     if (self.successBlock) {
         self.successBlock(result);
     }
@@ -486,9 +468,8 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     return nil;
 }
 
-//普通请求都是单个请求，图片上传是多个图片一起上传，需要设置更长的超时时间
 - (void)configHttpManager:(AFHTTPSessionManager *)manager {
-    manager.requestSerializer.timeoutInterval = kHttpRequestTimeoutInterval*(self.filesCount>1?self.filesCount:1);
+    manager.requestSerializer.timeoutInterval = kHttpRequestTimeoutInterval;
 }
 
 - (void)configRequestParams:(NSObject *)params {
@@ -527,10 +508,6 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 - (NSArray *)ignoreErrToastCodes {
     //取消请求的错误码是-999
     return @[@"-999"];
-}
-
-- (Class)propertyExtensionClass {
-    return nil;
 }
 
 @end
