@@ -16,12 +16,9 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 
 @interface TCBaseApi()
 
-@property (nonatomic,copy) NSString *URLFull;
-@property (nonatomic,copy) SuccessBlock successBlock;
-@property (nonatomic,copy) FinishBlock finishBlock;
-
-///直接返回http请求返回的原始的response和(checkHttpCanRequest返回的error或发起请求后返回的error)，优先级高于以上2个block
 @property (nonatomic,copy) FinishBlock originalFinishBlock;
+@property (nonatomic,copy) FinishBlock finishBlock;
+@property (nonatomic,copy) FinishBlock successBlock;
 
 @property (nonatomic,copy) MultipartBlock multipartBlock;
 @property (nonatomic,copy) UploadProgressBlock uploadProgressBlock;
@@ -31,10 +28,11 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 
 @property (nonatomic,strong) NSObject *params;//执行http请求时传的参数
 @property (nonatomic,strong) NSArray *successCodeArray;//作用：用来判断返回结果是否是成功的结果，优先级高于successCodes方法
-@property (nonatomic,weak) id delegate;//作用：对象销毁后，其中的所有http请求都会自动取消
 @property (nonatomic,weak) UIView *loadOnView;
 @property (nonatomic,assign) BOOL isShowErr;//发生错误时，是否显示toast提示,默认YES,即显示错误提示
 @property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
+
+@property (nonatomic,weak) TCBaseApi *weakApi;//通过finishBlock回传给http请求的调用者
 
 @end
 
@@ -44,9 +42,11 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 +(TCBaseApi * (^)(NSString *))apiInitURLFull {
     return ^(NSString * apiInitURLFull){
         TCBaseApi *api = [[self.class alloc] init];
-        api.URLFull = apiInitURLFull;
+        api->_URLFull = apiInitURLFull;
         api.isShowErr = YES;
         api.httpMethod = TCHttp_POST;
+        __weak typeof(api) weakApi = api;
+        api.weakApi = weakApi;
         return api;
     };
 }
@@ -78,7 +78,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 
 -(TCBaseApi * (^)(id delegate))l_delegate {
     return ^(id l_delegate){
-        self.delegate = l_delegate;
+        self->_delegate = l_delegate;
         return self;
     };
 }
@@ -135,8 +135,8 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 }
 
 -(TCBaseApi * (^)(FinishBlock))apiCallOriginal {
-    return ^(FinishBlock l_finishBlock){
-        self.originalFinishBlock = l_finishBlock;
+    return ^(FinishBlock l_originalFinishBlock){
+        self.originalFinishBlock = l_originalFinishBlock;
         [self prepareRequest];
         return self;
     };
@@ -150,8 +150,8 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     };
 }
 
--(TCBaseApi * (^)(SuccessBlock))apiCallSuccess {
-    return ^(SuccessBlock l_successBlock){
+-(TCBaseApi * (^)(FinishBlock))apiCallSuccess {
+    return ^(FinishBlock l_successBlock){
         self.successBlock = l_successBlock;
         [self prepareRequest];
         return self;
@@ -168,10 +168,14 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 - (void)propertyReset {
     _httpTask = nil;
     _isRequesting = NO;
-    _httpResponseObject = nil;
-    _httpResultDataObject = nil;
-    _httpResultOtherObject = nil;
-    _httpError = nil;
+    _response = nil;
+    _dataObject = nil;
+    _otherObject = nil;
+    _error = nil;
+    
+    _code = nil;
+    _msg = nil;
+    _time = nil;
 }
 
 /**
@@ -179,12 +183,14 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
  @param response http返回结果
  */
 - (void)handleResponse:(id)response {
-    _httpResponseObject = response;
+    [self stopLoading];
+    _response = response;
     if (self.printLog) {
         NSLog(@"http responseObject:  %@", response);
     }
+    
     if (self.originalFinishBlock) {
-        self.originalFinishBlock(response,nil);
+        self.originalFinishBlock(self.weakApi);
         return;
     }
     
@@ -195,30 +201,34 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     }
     
     NSString *codeKey = [self codeKey];
-    if (!codeKey.isNonEmpty) {
-        [self handleError:[NSError parseParamError:@"codeKey"]];
-        return;
+    if (codeKey.isNonEmpty) {
+        _code = response[codeKey];
     }
-    _code = response[codeKey];
     if ([_code isKindOfClass:NSNumber.class]) {
         //为了统一格式
         _code = [(NSNumber *)_code stringValue];
     }
-    NSString *msgKey = [self messageKey];
+    NSString *msgKey = [self msgKey];
     if (msgKey.isNonEmpty) {
-        _message = response[msgKey];
+        _msg = response[msgKey];
     }
-    NSString *currenttimeKey = [self currenttimeKey];
-    if (currenttimeKey.isNonEmpty) {
-        _currenttime = response[currenttimeKey];
+    NSString *timeKey = [self timeKey];
+    if (timeKey.isNonEmpty) {
+        _time = response[timeKey];
     }
     NSString *dataObjectKey = [self dataObjectKey];
     if (dataObjectKey.isNonEmpty) {
-        _httpResultDataObject = response[dataObjectKey];
+        _dataObject = response[dataObjectKey];
     }
     NSString *otherObjectKey = [self otherObjectKey];
     if (otherObjectKey.isNonEmpty) {
-        _httpResultOtherObject = response[otherObjectKey];
+        _otherObject = response[otherObjectKey];
+    }
+
+    NSError *err = [self requestFinish:self.weakApi];
+    if (err) {
+        [self handleError:err];
+        return;
     }
 
     //判断结果是否成功
@@ -229,9 +239,15 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
             [self handleSuccess];
             return;
         }
+    } else {
+        //code为空
+        if (self.finishBlock) {
+            self.finishBlock(self.weakApi);
+        }
+        return;
     }
     //失败
-    NSError *error = [NSError responseResultError:_code msg:_message];
+    NSError *error = [NSError responseResultError:_code msg:_msg];
     [self handleError:error];
 }
 
@@ -250,40 +266,28 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 
 - (void)handleSuccess {
     _isRequesting = NO;
-    id result = _httpResultDataObject ? : _httpResponseObject;
-    
     if (self.interceptorBlock) {
-        NSError *error = self.interceptorBlock(result);
+        NSError *error = self.interceptorBlock(self.weakApi);
         if (error) {
             [self handleError:error];
             return;
         }
     }
-    
-    if (self.loadOnView) {
-        if (![self hideCustomTost:self.loadOnView]) {
-            [self.loadOnView toastHide];
-        }
-    }
-
-    if (self.successBlock) {
-        self.successBlock(result);
-    }
-    if (self.finishBlock) {
-        self.finishBlock(result,nil);
+    if(self.successBlock) {
+        self.successBlock(self.weakApi);
+    } else if (self.finishBlock) {
+        self.finishBlock(self.weakApi);
     }
 }
 
 - (void)handleError:(NSError *)error {
-    _httpError = error;
+    [self stopLoading];
+    _error = error;
     _isRequesting = NO;
     if (self.printLog) {
         NSLog(@"http error:  %@", error);
     }
     if (self.loadOnView) {
-        if (![self hideCustomTost:self.loadOnView]) {
-            [self.loadOnView toastHide];
-        }
         if (self.isShowErr) {
             if (_code.isNonEmpty &&  [self isContainsCode:_code arr:self.ignoreErrToastCodes]) {
                 if (self.printLog) {
@@ -304,15 +308,19 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     }
     
     if (self.originalFinishBlock) {
-        self.originalFinishBlock(nil,error);
-        return;
-    }
-
-    if (self.finishBlock) {
-        self.finishBlock(nil,error);
+        self.originalFinishBlock(self.weakApi);
+    } else if (self.finishBlock) {
+        self.finishBlock(self.weakApi);
     }
 }
 
+- (void)stopLoading {
+    if (self.loadOnView) {
+        if (![self hideCustomTost:self.loadOnView]) {
+            [self.loadOnView toastHide];
+        }
+    }
+}
 
 - (void)request {
     if (self.printLog) {
@@ -345,7 +353,12 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
         [self handleResponse:response];
     };
     ResponseFailureBlock failure = ^(NSURLSessionDataTask *task, NSError *error) {
-        [self handleError:error];
+        NSError *err = [self requestFinish:self.weakApi];
+        if (err) {
+            [self handleError:err];
+        } else {
+            [self handleError:error];
+        }
     };
     
     NSMutableDictionary *headers = [NSMutableDictionary dictionary];
@@ -469,7 +482,6 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 }
 
 - (void)configHttpManager:(AFHTTPSessionManager *)manager {
-    manager.requestSerializer.timeoutInterval = kHttpRequestTimeoutInterval;
 }
 
 - (void)configRequestParams:(NSObject *)params {
@@ -484,12 +496,12 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     return @"code";
 }
 
-- (NSString *)messageKey {
-    return @"message";
+- (NSString *)msgKey {
+    return @"msg";
 }
 
-- (NSString *)currenttimeKey {
-    return @"currenttime";
+- (NSString *)timeKey {
+    return @"time";
 }
 
 - (NSString *)dataObjectKey {
@@ -508,6 +520,10 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 - (NSArray *)ignoreErrToastCodes {
     //取消请求的错误码是-999
     return @[@"-999"];
+}
+
+- (NSError *)requestFinish:(TCBaseApi *)api {
+    return nil;
 }
 
 @end

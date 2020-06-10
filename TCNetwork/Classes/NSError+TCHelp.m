@@ -49,7 +49,9 @@
 }
 
 + (NSError *)errorCode:(NSString *)code msg:(NSString *)msg {
-    NSError *error = [NSError errorWithDomain:@"TCFailureCustomError" code:code.integerValue userInfo:@{NSLocalizedDescriptionKey:msg?:@"Unknown Error"}];
+    NSError *error = [NSError errorWithDomain:@"TCFailureCustomError"
+                                         code:code.integerValue
+                                     userInfo:@{NSLocalizedDescriptionKey:msg?:@"Unknown Error"}];
     return error;
 }
 

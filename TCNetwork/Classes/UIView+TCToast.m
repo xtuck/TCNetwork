@@ -76,6 +76,9 @@
 }
 
 - (void)toastHide {
+    if (!self.isToastLoading) {
+        return;
+    }
     self.isToastLoading = NO;
     //[MBProgressHUD hideHUDForView:self animated:YES];
     for (UIView *subview in self.subviews) {
