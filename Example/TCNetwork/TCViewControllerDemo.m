@@ -21,13 +21,9 @@
     self.view.backgroundColor = [UIColor lightGrayColor];
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        //获取api对象返回结果后，解析完后的属性值，请看控制台输出的日志
-        CheckVersionApi *api = (CheckVersionApi *)[CheckVersionApi checkVersion];
-        //api需要先实例化后，才能被block捕获，或者使用__block修饰CheckVersionApi *api
-        api.l_delegate(self).l_loadOnView(self.view).apiCall(^(id resObject,NSError *error){
-            NSDictionary *originalResObj = api.httpResponseObject;
-            [UIView.appWindow toastWithText:originalResObj.description hideAfterDelay:5];
-            NSLog(@"原始数据为：\n%@",originalResObj.description);
+        [CheckVersionApi checkVersion].l_delegate(self).l_loadOnView(self.view).apiCall(^(CheckVersionApi *api){
+            [UIView.appWindow toastWithText:[api.response description] hideAfterDelay:5];
+            NSLog(@"原始数据为：\n%@",[api.response description]);
         });
     });
     

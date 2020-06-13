@@ -41,5 +41,6 @@ Https请求调不通的时候，需要在info.plist中配置
 </dict>
 
 ## 待扩展
-1，JSON转model
-2，多任务下载管理
+1，JSON转model\n
+2，多任务下载管理\n
+3，自动登录

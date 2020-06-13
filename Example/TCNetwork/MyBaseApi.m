@@ -9,6 +9,9 @@
 #import "MyBaseApi.h"
 #import "CocoaSecurity.h"
 
+
+#pragma mark - 字符串参数也可以写在自己的宏配置文件中，便于统一管理维护
+
 @implementation MyBaseApi
 
 + (NSString *)baseUrl {
@@ -62,9 +65,15 @@
 }
 
 
-//自己的基类扩展了属性
-- (Class)propertyExtensionClass {
-    return MyBaseApi.class;
+- (NSError *)requestFinish:(TCBaseApi *)api {
+    if (api.code.intValue == 10010) {
+        //token失效，需重新登录
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"kNotifyUserLoginExpired" object:nil];
+    } if (api.code.intValue == 10000) {
+        //你的账号已在别处登录
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"kNotifyUserLoginSqueezed" object:nil];
+    }
+    //可以重新创建error，也可以继续用api.error
+    return api.error;
 }
-
 @end
