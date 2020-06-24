@@ -13,6 +13,27 @@
     return [[self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] != 0;
 }
 
+- (NSString * (^)(NSString *))l_joinURL {
+    return ^(NSString *suffix){
+        return [self jointUrlSuffix:suffix];
+    };
+}
+
+- (NSString *)jointUrlSuffix:(NSString *)suffixStr {
+    //return [self stringByAppendingPathComponent:suffixStr?:@""]; //这个方法会把双斜杠变成单斜杠
+    if ([self hasSuffix:@"/"]) {
+        if ([suffixStr hasPrefix:@"/"]) {
+            suffixStr = [suffixStr substringFromIndex:1];
+        }
+    } else {
+        if (![suffixStr hasPrefix:@"/"]) {
+            suffixStr = [@"/" stringByAppendingString:suffixStr?:@""];
+        }
+    }
+    return [NSString stringWithFormat:@"%@%@",self,suffixStr];
+}
+
+
 + (NSString * (^)(NSString *,...))joinURL {
     return ^(NSString *obj,...){
         va_list args;
@@ -33,7 +54,7 @@
                 [objs addObject:argument];
             }
         }
-        return [NSString pathWithComponents:objs];
+        return [NSString pathWithComponents:objs];//这个方法会把双斜杠变成单斜杠
     };
 }
 
