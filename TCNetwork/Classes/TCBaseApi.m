@@ -29,7 +29,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 @property (nonatomic,strong) NSObject *params;//执行http请求时传的参数
 @property (nonatomic,strong) NSArray *successCodeArray;//作用：用来判断返回结果是否是成功的结果，优先级高于successCodes方法
 @property (nonatomic,weak) UIView *loadOnView;
-@property (nonatomic,assign) BOOL isShowErr;//发生错误时，是否显示toast提示,默认YES,即显示错误提示
+@property (nonatomic,assign) BOOL isShowErr;//发生错误时，是否显示toast提示
 @property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
 
 @property (nonatomic,weak) TCBaseApi *weakApi;//通过finishBlock回传给http请求的调用者
@@ -43,7 +43,6 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     return ^(NSString * apiInitURLFull){
         TCBaseApi *api = [[self.class alloc] init];
         api->_URLFull = apiInitURLFull;
-        api.isShowErr = YES;
         api.httpMethod = TCHttp_POST;
         __weak typeof(api) weakApi = api;
         api.weakApi = weakApi;
@@ -64,6 +63,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 -(TCBaseApi * (^)(UIView *))l_loadOnView {
     return ^(UIView * l_loadOnView){
         self.loadOnView = l_loadOnView;
+        self.isShowErr = l_loadOnView != nil;
         return self;
     };
 }
@@ -287,22 +287,21 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     if (self.printLog) {
         NSLog(@"http error:  %@", error);
     }
-    if (self.loadOnView) {
-        if (self.isShowErr) {
-            if (_code.isNonEmpty &&  [self isContainsCode:_code arr:self.ignoreErrToastCodes]) {
-                if (self.printLog) {
-                    NSLog(@"忽略了一个错误提示:  %@", _code);
-                }
-            } else {
-                NSString *errMsg = nil;
-                if ([error isKindOfClass:NSString.class]) {
-                    errMsg = (id)error;
-                } else if ([error isKindOfClass:NSError.class]){
-                    errMsg = error.errorMessage;
-                }
-                if (![self showCustomTost:self.loadOnView text:errMsg]) {
-                    [UIView.appWindow toastWithText:errMsg];
-                }
+    
+    if (self.isShowErr) {
+        if (_code.isNonEmpty &&  [self isContainsCode:_code arr:self.ignoreErrToastCodes]) {
+            if (self.printLog) {
+                NSLog(@"忽略了一个错误提示:  %@", _code);
+            }
+        } else {
+            NSString *errMsg = nil;
+            if ([error isKindOfClass:NSString.class]) {
+                errMsg = (id)error;
+            } else if ([error isKindOfClass:NSError.class]){
+                errMsg = error.errorMessage;
+            }
+            if (![self showCustomTost:(self.loadOnView ? : UIView.appWindow) text:errMsg]) {
+                [UIView.appWindow toastWithText:errMsg];
             }
         }
     }
