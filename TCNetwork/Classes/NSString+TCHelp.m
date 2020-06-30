@@ -6,11 +6,29 @@
 //
 
 #import "NSString+TCHelp.h"
+#import "CocoaSecurity.h"
 
 @implementation NSString (TCHelp)
 
 - (BOOL)isNonEmpty {
     return [[self stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] != 0;
+}
+
+- (NSString *)md5HexLower {
+    return [CocoaSecurity md5:self].hexLower;
+}
+
+- (NSString *)md5HexUpper {
+    return [CocoaSecurity md5:self].hex;
+}
+
+- (NSString *)md5del0 {
+    NSMutableString *md5 = [self mutableCopy];
+    //首位有0则去掉首位的0
+    while ([md5 hasPrefix:@"0"]) {
+        [md5 deleteCharactersInRange:NSMakeRange(0, 1)];
+    }
+    return md5;
 }
 
 - (NSString * (^)(NSString *))l_joinURL {

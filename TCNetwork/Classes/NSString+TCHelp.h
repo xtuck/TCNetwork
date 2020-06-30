@@ -13,6 +13,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (BOOL)isNonEmpty;
 
+//md5加密
+- (NSString *)md5HexLower;
+- (NSString *)md5HexUpper;
+//头部去0，仅是去0
+- (NSString *)md5del0;
+
 - (NSString * (^)(NSString *))l_joinURL;
 - (NSString *)jointUrlSuffix:(NSString *)suffixStr;
 
