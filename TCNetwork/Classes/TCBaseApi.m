@@ -431,7 +431,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     [self autoCancelTask];
     
     if (self.printLog) {
-        NSLog(@"Request header: %@\n path: %@\n params: %@",_httpTask.currentRequest.allHTTPHeaderFields, self.URLFull, postParams);
+        NSLog(@"Request header: %@\n path: %@\n params: %@",_httpTask.originalRequest.allHTTPHeaderFields.description, self.URLFull, postParams);
     }
 }
 
