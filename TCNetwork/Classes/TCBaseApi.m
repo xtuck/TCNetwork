@@ -289,6 +289,9 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     }
     
     if (self.isShowErr) {
+        if (!_code.isNonEmpty && [error isKindOfClass:NSError.class]) {
+            _code = [@(error.code) stringValue];
+        }
         if (_code.isNonEmpty &&  [self isContainsCode:_code arr:self.ignoreErrToastCodes]) {
             if (self.printLog) {
                 NSLog(@"忽略了一个错误提示:  %@", _code);
