@@ -31,6 +31,10 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 @property (nonatomic,weak) UIView *loadOnView;
 @property (nonatomic,assign) BOOL isShowErr;//发生错误时，是否显示toast提示
 @property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
+@property (nonatomic,assign) Class parseModelClass;//解析的返回数据中的model对应的class，当解析的返回数据为数组时，对应数组内的对象类型
+@property (nonatomic,assign) BOOL isParseArray;//解析的返回数据是否为数组
+@property (nonatomic,copy) NSString *parseKey;//解析的返回数据取值的key
+@property (nonatomic,assign) NSTimeInterval limitRequestInterval;//限制相同请求的间隔时间
 
 @property (nonatomic,weak) TCBaseApi *weakApi;//通过finishBlock回传给http请求的调用者
 
@@ -134,6 +138,40 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     };
 }
 
+-(TCBaseApi * (^)(NSTimeInterval))l_limitRequestInterval {
+    return ^(NSTimeInterval l_limitRequestInterval){
+        self.limitRequestInterval = l_limitRequestInterval;
+        return self;
+    };
+}
+
+-(TCBaseApi * (^)(Class))l_parseModelClass {
+    return ^(Class l_clazz){
+        return self.l_parseModelClass_parseKey(l_clazz,nil);
+    };
+}
+
+-(TCBaseApi * (^)(Class,NSString *))l_parseModelClass_parseKey {
+    return ^(Class l_clazz,NSString *l_parseKey){
+        return self.l_parseModelClass_parseKey_isArray(l_clazz,l_parseKey,NO);
+    };
+}
+
+-(TCBaseApi * (^)(Class,BOOL))l_parseModelClass_isArray {
+    return ^(Class l_clazz,BOOL l_isArray){
+        return self.l_parseModelClass_parseKey_isArray(l_clazz,nil,l_isArray);
+    };
+}
+
+-(TCBaseApi * (^)(Class,NSString *,BOOL))l_parseModelClass_parseKey_isArray {
+    return ^(Class l_clazz,NSString * l_parseKey,BOOL l_isArray){
+        self.parseModelClass = l_clazz;
+        self.parseKey = l_parseKey;
+        self.isParseArray = l_isArray;
+        return self;
+    };
+}
+
 -(TCBaseApi * (^)(FinishBlock))apiCallOriginal {
     return ^(FinishBlock l_originalFinishBlock){
         self.originalFinishBlock = l_originalFinishBlock;
@@ -172,10 +210,80 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     _dataObject = nil;
     _otherObject = nil;
     _error = nil;
+    _resultParseObject = nil;
     
     _code = nil;
     _msg = nil;
     _time = nil;
+}
+
+//model解析
+- (void)parseResult {
+    _resultParseObject = nil;
+    NSObject *parseObj = nil;
+    if (!self.parseKey.isNonEmpty) {
+        parseObj = [_dataObject copy];
+    } else {
+        NSDictionary *resultDic = nil;
+        NSMutableArray *keys = [NSMutableArray array];
+        NSString *tempParseKey = self.parseKey;
+        if ([tempParseKey hasPrefix:@"."]) {
+            if ([self dataObjectKey].isNonEmpty) {
+                resultDic = [_dataObject copy];
+            }
+            tempParseKey = [tempParseKey substringFromIndex:1];
+        } else {
+            resultDic = [_response copy];
+        }
+        [keys addObjectsFromArray:[tempParseKey componentsSeparatedByString:@"."]];
+        
+        for (NSString *pKey in keys) {
+            if ([resultDic isKindOfClass:NSDictionary.class]) {
+                resultDic = resultDic[pKey];
+            }
+        }
+        parseObj = resultDic;
+    }
+    if (!parseObj) {
+        return;
+    }
+    if (self.parseModelClass) {
+        SEL isCustomClassSel = NSSelectorFromString(@"__isCustomClass:");;
+        if ([self respondsToSelector:isCustomClassSel]) {
+            IMP imp = [self methodForSelector:isCustomClassSel];
+            BOOL (*func)(id, SEL, id) = (void *)imp;
+            BOOL isCustomClass = func(self, isCustomClassSel,self.parseModelClass);
+            if (!isCustomClass) {
+                _resultParseObject = parseObj;
+#if DEBUG
+                NSLog(@"传入的parseModelClass不是自定义的model，resultParseObject将赋值为原始数据");
+#endif
+                return;
+            }
+        }
+
+        SEL modelSel = nil;
+        if (self.isParseArray) {
+            modelSel = NSSelectorFromString(@"tc_arrayOfModelsFromKeyValues:error:");
+        } else {
+            modelSel = NSSelectorFromString(@"tc_modelFromKeyValues:error:");
+        }
+        NSError *err = nil;
+        if ([self.parseModelClass respondsToSelector:modelSel]) {
+            IMP imp = [self.parseModelClass methodForSelector:modelSel];
+            NSObject *(*func)(id, SEL, id, NSError**) = (void *)imp;
+            _resultParseObject = func(self.parseModelClass, modelSel, parseObj, &err);
+        } else {
+            err = [NSError errorCode:@"-14562" msg:@"请添加：pod 'TCJSONModel' 进行model转换"];
+        }
+        if (err) {
+#if DEBUG
+            NSLog(@"%@", err.localizedDescription);
+#endif
+        }
+    } else {
+        _resultParseObject = parseObj;
+    }
 }
 
 /**
@@ -225,6 +333,13 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
         _otherObject = response[otherObjectKey];
     }
 
+    //model解析
+    [self parseResult];
+    //容错处理，避免外部调用array的方法时崩溃
+    if (self.isParseArray && ![_resultParseObject isKindOfClass:NSArray.class]) {
+        _resultParseObject = nil;
+    }
+    
     NSError *err = [self requestFinish:self.weakApi];
     if (err) {
         [self handleError:err];
@@ -324,11 +439,53 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     }
 }
 
+//如果有特效需求，也可以在子类中重写此方法，返回error，来限制http请求
+- (NSError *)checkLimitRequestWithParams:(NSDictionary *)params {
+    //判断请求时间间隔的限制
+    if (self.limitRequestInterval > 0) {
+        static NSMutableDictionary *limitDic = nil;
+        if (!limitDic) {
+            limitDic = [NSMutableDictionary dictionary];
+        }
+        NSTimeInterval currentTime = CACurrentMediaTime();
+        NSString *paramStr = [NSString stringWithFormat:@"%@:%@",self.URLFull,params];
+        NSString *keyStr = paramStr.md5HexLower;
+        NSNumber *lastTime = limitDic[keyStr];
+        if (lastTime && currentTime - lastTime.doubleValue < self.limitRequestInterval) {
+            //限制
+            if (self.printLog) {
+                NSLog(@"%@秒内的重复请求已被忽略：%@\n%@",@(self.limitRequestInterval),keyStr,paramStr);
+            }
+            return [NSError errorCode:@"-999" msg:@"请求过于频繁，已取消"];
+        } else {
+            //不限制
+            if (limitDic.allKeys.count>100) {
+                [limitDic removeAllObjects];
+            }
+            [limitDic setValue:@(currentTime) forKey:keyStr];
+        }
+    }
+    return nil;
+}
+
 - (void)request {
     if (self.printLog) {
         NSLog(@"HTTP调用接口 %@",self.URLFull);
     }
     NSError *err = [self checkHttpCanRequest];
+    if (err) {
+        [self handleError:err];
+        return;
+    }
+    
+    //处理请求参数
+    if (!self.params) {
+        self.params = [NSMutableDictionary dictionary];
+    }
+    NSObject *postParams = [self.params mutableCopy];
+    [self configRequestParams:postParams];
+
+    err = [self checkLimitRequestWithParams:(id)postParams];
     if (err) {
         [self handleError:err];
         return;
@@ -343,13 +500,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     _isRequesting = YES;
     
     [self configHttpManager:[TCHttpManager sharedAFManager]];
-    
-    if (!self.params) {
-        self.params = [NSMutableDictionary dictionary];
-    }
-    NSObject *postParams = [self.params mutableCopy];
-    [self configRequestParams:postParams];
-    
+        
     //下面的block中需要用self，延长实例生命周期
     ResponseSuccessBlock success = ^(NSURLSessionDataTask *task, id response) {
         [self handleResponse:response];
@@ -434,7 +585,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     [self autoCancelTask];
     
     if (self.printLog) {
-        NSLog(@"Request header: %@\n path: %@\n params: %@",_httpTask.originalRequest.allHTTPHeaderFields.description, self.URLFull, postParams);
+        NSLog(@"Request header: %@\n path: %@\n params: %@",_httpTask.originalRequest.allHTTPHeaderFields, self.URLFull, postParams);
     }
 }
 

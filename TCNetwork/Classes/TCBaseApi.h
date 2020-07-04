@@ -63,6 +63,9 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 ///response中解析出的服务器当前时间
 @property (nonatomic,readonly) NSString *time;
 
+///最终解析出的结果：单个对象或者数组
+@property (nonatomic,readonly) id resultParseObject;
+
 
 /// 初始化，传入拼接好的url，使用NSString分类方法 l_joinURL 进行拼接。（推荐）
 +(TCBaseApi * (^)(NSString *))apiInitURLFull;
@@ -72,9 +75,9 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 
 ///承载loading的view
 -(TCBaseApi * (^)(UIView *))l_loadOnView;
-
 /// 参数1：承载loading的view， 参数2:发生错误时，是否toast显示错误提示信息
 -(TCBaseApi * (^)(UIView *, BOOL))l_loadOnView_isShowErr;
+
 -(TCBaseApi * (^)(id delegate))l_delegate;
 -(TCBaseApi * (^)(NSObject *))l_params;
 
@@ -90,6 +93,19 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 
 /// 设置http请求的method,不设置的话，默认是post
 -(TCBaseApi * (^)(TCHttpMethod method))l_httpMethod;
+
+/// 限制请求的间隔时间，相同接口和相同参数，在间隔时间内重复调用时，后调用的将直接被忽略
+-(TCBaseApi * (^)(NSTimeInterval))l_limitRequestInterval;
+
+/// 解析返回数据
+/// 参数1:解析结果中的model对应的class(如果是基本类型请传nil)，如果设置为nil，结果将返回response字典中的对应的原始值
+/// 参数2:解析时取值的key，如果设置为nil，取的是dataObjectKey对应的key值（例：data）
+///      可通过"."进行指定路径，如果开头是“.”,则表示“.”之前的路径为dataObjectKey(例：“.list” = "data.list")
+/// 参数3:解析的值是否是数组，通常是列表数据使用较多
+-(TCBaseApi * (^)(Class,NSString *,BOOL))l_parseModelClass_parseKey_isArray;
+-(TCBaseApi * (^)(Class,NSString *))l_parseModelClass_parseKey;
+-(TCBaseApi * (^)(Class,BOOL))l_parseModelClass_isArray;
+-(TCBaseApi * (^)(Class))l_parseModelClass;
 
 
 //执行请求，请放在链式语法的最末尾
