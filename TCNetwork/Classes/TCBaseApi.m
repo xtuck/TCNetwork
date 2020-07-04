@@ -439,7 +439,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     }
 }
 
-//如果有特效需求，也可以在子类中重写此方法，返回error，来限制http请求
+//如果有特殊需求，也可以在子类中重写此方法，返回error，来限制http请求
 - (NSError *)checkLimitRequestWithParams:(NSDictionary *)params {
     //判断请求时间间隔的限制
     if (self.limitRequestInterval > 0) {
