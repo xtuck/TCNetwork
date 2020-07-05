@@ -21,6 +21,7 @@
         [self removeObjectForKey:key];
     }
 }
+
 - (NSMutableDictionary *(^)(NSString *,id))addKV {
     return ^(NSString *key,id value){
         [self setParamsWithKey:key value:value];

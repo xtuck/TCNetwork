@@ -17,8 +17,6 @@ typedef NS_ENUM(NSInteger,TCCustomApiErrorCode) {
 
 @interface NSError (TCHelp)
 
-- (NSString *)errorMessage;
-
 + (NSError *)noNetworkError;
 
 + (NSError *)httpMethodError;

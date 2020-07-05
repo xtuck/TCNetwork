@@ -9,10 +9,6 @@
 
 @implementation NSError (TCHelp)
 
-- (NSString *)errorMessage {
-    return self.localizedDescription;
-}
-
 + (NSError *)noNetworkError {
     NSError *error = [NSError errorWithDomain:@"TCFailureNoNetwork"
                                          code:APIErrorCode_NoNetwork

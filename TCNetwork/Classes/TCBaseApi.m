@@ -494,7 +494,7 @@
             if ([error isKindOfClass:NSString.class]) {
                 errMsg = (id)error;
             } else if ([error isKindOfClass:NSError.class]){
-                errMsg = error.errorMessage;
+                errMsg = error.localizedDescription;
             }
             UIView *toastView = self.loadOnView ? : UIView.appWindow;
             if (![self showCustomTost:toastView text:errMsg]) {
