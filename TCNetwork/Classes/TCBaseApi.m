@@ -217,6 +217,12 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     _time = nil;
 }
 
+- (void)printDebugLog:(NSString *)log {
+#if DEBUG
+    NSLog(@"%@",log);
+#endif
+}
+
 //model解析
 - (void)parseResult {
     _resultParseObject = nil;
@@ -224,6 +230,12 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     if (!self.parseKey.isNonEmpty) {
         parseObj = [_dataObject copy];
     } else {
+        if (!self.isParseArray && [self.parseKey hasSuffix:@")"]) {
+            //如果parseKey最末尾是通过(x,y)来取值，则会强制将isParseArray变为YES
+            self.isParseArray = YES;
+            [self printDebugLog:[NSString stringWithFormat:@"parseKey:%@ 最末尾是通过(x,y)来取值,所以强制将isParseArray变为YES",self.parseKey]];
+        }
+
         NSDictionary *resultDic = nil;
         NSMutableArray *keys = [NSMutableArray array];
         NSString *tempParseKey = self.parseKey;
@@ -238,12 +250,71 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
         [keys addObjectsFromArray:[tempParseKey componentsSeparatedByString:@"."]];
         
         for (NSString *pKey in keys) {
-            if ([resultDic isKindOfClass:NSDictionary.class]) {
-                resultDic = resultDic[pKey];
+            //判断是否是数组取值:下标取值[0]和区间取值range(0,1),支持多维取值
+            NSUInteger start = [pKey rangeOfString:@"["].location;
+            NSUInteger start2 = [pKey rangeOfString:@"("].location;
+            NSString *indexsKey = nil;
+            if (start == NSNotFound && start2 == NSNotFound) {
+                if ([resultDic isKindOfClass:NSDictionary.class]) {
+                    resultDic = resultDic[pKey];
+                }
+                continue;
+            } else {
+                NSUInteger mStart = start < start2 ? start : start2;
+                indexsKey = [pKey substringFromIndex:mStart];
+                NSString *pKeyNew = [pKey substringToIndex:mStart];
+                if (pKeyNew.isNonEmpty) {
+                    resultDic = resultDic[pKeyNew];
+                }
+            }
+            //例："[0](1,2)(1,2)[3][4](3,4)" -> "0","(1,2)(1,2)3","4","(3,4)" -> "0","1,2","1,2","3","4","3,4"
+            if (indexsKey.isNonEmpty) {
+                NSMutableArray *indexsArray = [NSMutableArray array];
+                NSArray *cmps = [[indexsKey stringByReplacingOccurrencesOfString:@"[" withString:@""] componentsSeparatedByString:@"]"];
+                for (NSString *subcmps in cmps) {
+                    if (subcmps.isNonEmpty) {
+                        NSArray *cmps2 = [[subcmps stringByReplacingOccurrencesOfString:@"(" withString:@""] componentsSeparatedByString:@")"];
+                        for (NSString *subcmps2 in cmps2) {
+                            if (subcmps2.isNonEmpty) {
+                                [indexsArray addObject:subcmps2];
+                            }
+                        }
+                    }
+                }
+                for (NSString *indexStr in indexsArray) {
+                    if (![resultDic isKindOfClass:NSArray.class]) {
+                        [self printDebugLog:[NSString stringWithFormat:@"数组类型不匹配%@: %@",self.parseKey,indexsKey]];
+                        return;
+                    }
+                    NSRange rang = NSMakeRange(0, 1);
+                    NSUInteger comma = [indexStr rangeOfString:@","].location;
+                    if (comma != NSNotFound) {
+                        NSString *loc = [indexStr substringToIndex:comma];
+                        rang.location = loc.integerValue > 0 ? loc.integerValue : 0;
+                        NSString *len = [indexStr substringFromIndex:comma+1];
+                        rang.length = len.integerValue > 0 ? len.integerValue : 0;
+                    } else {
+                        rang.location = indexStr.integerValue > 0 ? indexStr.integerValue : 0;
+                    }
+                    NSArray *resArray = (NSArray *)resultDic;
+                    if (rang.location >= resArray.count) {
+                        [self printDebugLog:[NSString stringWithFormat:@"数组取值越界%@: %@",self.parseKey,indexsKey]];
+                        return;
+                    }
+                    if (comma != NSNotFound) {
+                        if (rang.length == 0 || rang.location + rang.length > resArray.count) {
+                            rang.length = resArray.count - rang.location;
+                        }
+                        resultDic = (id)[resArray subarrayWithRange:rang];
+                    } else {
+                        resultDic = [resArray objectAtIndex:rang.location];
+                    }
+                }
             }
         }
         parseObj = resultDic;
     }
+    
     if (!parseObj) {
         return;
     }
@@ -255,13 +326,10 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
             BOOL isCustomClass = func(self, isCustomClassSel,self.parseModelClass);
             if (!isCustomClass) {
                 _resultParseObject = parseObj;
-#if DEBUG
-                NSLog(@"传入的parseModelClass不是自定义的model，resultParseObject将赋值为原始数据");
-#endif
+                [self printDebugLog:@"传入的parseModelClass不是自定义的model，resultParseObject将赋值为原始数据"];
                 return;
             }
         }
-
         SEL modelSel = nil;
         if (self.isParseArray) {
             modelSel = NSSelectorFromString(@"tc_arrayOfModelsFromKeyValues:error:");
@@ -277,9 +345,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
             err = [NSError errorCode:@"-14562" msg:@"请添加：pod 'TCJSONModel' 进行model转换"];
         }
         if (err) {
-#if DEBUG
-            NSLog(@"%@", err.localizedDescription);
-#endif
+            [self printDebugLog:err.localizedDescription];
         }
     } else {
         _resultParseObject = parseObj;

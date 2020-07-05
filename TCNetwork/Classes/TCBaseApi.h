@@ -63,7 +63,7 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 ///response中解析出的服务器当前时间
 @property (nonatomic,readonly) NSString *time;
 
-///最终解析出的结果：单个对象或者数组
+///最终解析出的结果：单个对象或者数组，如果没有设置parseModelClass_parseKey，默认情况下 = dataObject
 @property (nonatomic,readonly) id resultParseObject;
 
 
@@ -101,6 +101,8 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 /// 参数1:解析结果中的model对应的class(如果是基本类型请传nil)，如果设置为nil，结果将返回response字典中的对应的原始值
 /// 参数2:解析时取值的key，如果设置为nil，取的是dataObjectKey对应的key值（例：data）
 ///      可通过"."进行指定路径，如果开头是“.”,则表示“.”之前的路径为dataObjectKey(例：“.list” = "data.list")
+///      支持多维数组取值：例：“list[0](1,2)[3](3,4)”,  [x]表示数组下标取值，(x,y)表示NSRange取值
+///      如果parseKey最末尾是通过(x,y)来取值，则会强制将isArray变为YES
 /// 参数3:解析的值是否是数组，通常是列表数据使用较多
 -(TCBaseApi * (^)(Class,NSString *,BOOL))l_parseModelClass_parseKey_isArray;
 -(TCBaseApi * (^)(Class,NSString *))l_parseModelClass_parseKey;
