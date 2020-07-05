@@ -9,11 +9,6 @@
 #import <Aspects/Aspects.h>
 #import <objc/runtime.h>
 
-typedef void (^ResponseSuccessBlock) (NSURLSessionDataTask *task, id response);
-typedef void (^ResponseFailureBlock) (NSURLSessionDataTask *task, NSError *error);
-typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
-
-
 @interface TCBaseApi()
 
 @property (nonatomic,copy) FinishBlock originalFinishBlock;
@@ -21,8 +16,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 @property (nonatomic,copy) FinishBlock successBlock;
 
 @property (nonatomic,copy) MultipartBlock multipartBlock;
-@property (nonatomic,copy) UploadProgressBlock uploadProgressBlock;
-@property (nonatomic,copy) DownloadProgressBlock downloadProgressBlock;
+@property (nonatomic,copy) ProgressBlock progressBlock;
 
 @property (nonatomic,copy) InterceptorBlock interceptorBlock;
 
@@ -103,16 +97,9 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     };
 }
 
--(TCBaseApi * (^)(UploadProgressBlock))l_uploadProgressBlock {
-    return ^(UploadProgressBlock l_uploadProgressBlock){
-        self.uploadProgressBlock = l_uploadProgressBlock;
-        return self;
-    };
-}
-
--(TCBaseApi * (^)(DownloadProgressBlock))l_downloadProgressBlock {
-    return ^(DownloadProgressBlock l_downloadProgressBlock){
-        self.downloadProgressBlock = l_downloadProgressBlock;
+-(TCBaseApi * (^)(ProgressBlock))l_progressBlock {
+    return ^(ProgressBlock l_progressBlock){
+        self.progressBlock = l_progressBlock;
         return self;
     };
 }
@@ -382,6 +369,23 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
         return;
     }
     
+    Class clazz = self.propertyExtensionClass;
+    if (clazz && [self isKindOfClass:clazz] && ![clazz isMemberOfClass:TCBaseApi.class]) {
+        //对扩展的属性进行赋值
+        unsigned int count;
+        objc_property_t *propertyList = class_copyPropertyList(clazz, &count);
+        for (unsigned int i = 0; i < count; i++) {
+            const char *propertyName = property_getName(propertyList[i]);
+            NSString *pName = [NSString stringWithUTF8String:propertyName];
+            NSObject *value = response[pName];
+            [self setValue:value forKey:pName];
+            if (self.printLog) {
+                NSLog(@"扩展的属性：(%d) : %@  赋值：%@", i, pName, value.description);
+            }
+        }
+        free(propertyList);
+    }
+
     NSString *codeKey = [self codeKey];
     if (codeKey.isNonEmpty) {
         _code = response[codeKey];
@@ -577,10 +581,10 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     [self configHttpManager:[TCHttpManager sharedAFManager]];
         
     //下面的block中需要用self，延长实例生命周期
-    ResponseSuccessBlock success = ^(NSURLSessionDataTask *task, id response) {
+    void (^success)(NSURLSessionDataTask *, id) = ^(NSURLSessionDataTask *task, id response) {
         [self handleResponse:response];
     };
-    ResponseFailureBlock failure = ^(NSURLSessionDataTask *task, NSError *error) {
+    void (^failure)(NSURLSessionDataTask *, NSError *) = ^(NSURLSessionDataTask *task, NSError *error) {
         NSError *err = [self requestFinish:self.weakApi];
         if (err) {
             [self handleError:err];
@@ -598,7 +602,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
                                                parameters:postParams
                                                   headers:headers
                                 constructingBodyWithBlock:self.multipartBlock
-                                                 progress:self.uploadProgressBlock
+                                                 progress:self.progressBlock
                                                   success:success
                                                   failure:failure];
     } else {
@@ -607,7 +611,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
                 _httpTask = [[TCHttpManager sharedAFManager] POST:self.URLFull
                                                        parameters:postParams
                                                           headers:headers
-                                                         progress:self.uploadProgressBlock
+                                                         progress:self.progressBlock
                                                           success:success
                                                           failure:failure];
                 break;
@@ -615,7 +619,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
                 _httpTask = [[TCHttpManager sharedAFManager] GET:self.URLFull
                                                       parameters:postParams
                                                          headers:headers
-                                                        progress:self.downloadProgressBlock
+                                                        progress:self.progressBlock
                                                          success:success
                                                          failure:failure];
                 break;
@@ -641,7 +645,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
                                                            failure:failure];
                 break;
             case TCHttp_HEAD: {
-                HEADPATCHSuccessBlock hpSuccess = ^(NSURLSessionDataTask *task) {
+                void (^hpSuccess)(NSURLSessionDataTask *) = ^(NSURLSessionDataTask *task) {
                     success(task,@"success");
                 };
                 _httpTask = [[TCHttpManager sharedAFManager] HEAD:self.URLFull
@@ -748,6 +752,10 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 - (NSArray *)ignoreErrToastCodes {
     //取消请求的错误码是-999
     return @[@"-999"];
+}
+
+- (Class)propertyExtensionClass {
+    return nil;
 }
 
 - (NSError *)requestFinish:(TCBaseApi *)api {

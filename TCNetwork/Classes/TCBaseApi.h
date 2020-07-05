@@ -26,8 +26,7 @@ typedef void (^FinishBlock) (id api);
 typedef NSError * (^InterceptorBlock) (id api);  //接口返回成功数据处理拦截器
 
 typedef void (^MultipartBlock) (id<AFMultipartFormData> formData);      //上传文件使用
-typedef void (^UploadProgressBlock) (NSProgress *uploadProgress);       //对应post请求
-typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应get请求
+typedef void (^ProgressBlock) (NSProgress *progress);                   //请求处理进度
 
 
 /// 执行http请求的基类，使用时，请继承该类
@@ -86,9 +85,14 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 -(TCBaseApi * (^)(NSArray *))l_successCodeArray;
 
 -(TCBaseApi * (^)(MultipartBlock))l_multipartBlock;
--(TCBaseApi * (^)(UploadProgressBlock))l_uploadProgressBlock;
--(TCBaseApi * (^)(DownloadProgressBlock))l_downloadProgressBlock;
+-(TCBaseApi * (^)(ProgressBlock))l_progressBlock;
 
+/// 接口返回成功数据处理拦截器,会在apiCall的block执行之前调用，通常用来处理一些通用逻辑。
+/// 例如：登录成功后需要存储用户数据，或者进行角色判断，是否允许用户登录。
+///      获取用户信息后，需要存储用户数据。这类接口通常是很多个地方调用。
+///      同个接口，多个地方调用，可以在interceptorBlock中广播通知，执行通用逻辑。
+/// 该block只会在handleSuccess中执行，即解析数据为成功状态，才会执行。
+/// 通过返回的error来控制最终的返回结果是成功还是失败
 -(TCBaseApi * (^)(InterceptorBlock))l_interceptorBlock;
 
 /// 设置http请求的method,不设置的话，默认是post
@@ -179,6 +183,9 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 ///忽略错误提示信息的code数组，某些请求失败后，不想toast显示提示信息
 - (NSArray *)ignoreErrToastCodes;
 
+/// 在TCBaseApi的子类中扩展属性，当对response进行解析时，会对扩展的属性进行赋值。（该方案不太规范，不推荐使用）
+/// 设置的class必须是当前self本身的class或其父类，且是TCBaseApi的子类，建议使用自己创建的继承于TCBaseApi的基类。不要扩展TCBaseApi已有的属性。
+- (Class)propertyExtensionClass;
 
 /// 请求刚完毕时的结果检查，统一处理特殊业务，子类复写
 /// @param api 当前请求的api接口对象,需要用的数据都在该api的属性中
