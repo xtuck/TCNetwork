@@ -11,7 +11,7 @@
 @implementation NSMutableDictionary (paramsSet)
 
 - (void)setParamsWithKey:(NSString *)key value:(id)value {
-    if (key.length&&value) {
+    if (key.length) {
         [self setValue:value forKey:key];
     }
 }
