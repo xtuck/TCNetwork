@@ -35,6 +35,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 @property (nonatomic,assign) BOOL isParseArray;//解析的返回数据是否为数组
 @property (nonatomic,copy) NSString *parseKey;//解析的返回数据取值的key
 @property (nonatomic,assign) NSTimeInterval limitRequestInterval;//限制相同请求的间隔时间
+@property (nonatomic,assign) TCToastStype toastStype;//提示框颜色，默认是白色，支持暗黑模式变换。
 
 @property (nonatomic,weak) TCBaseApi *weakApi;//通过finishBlock回传给http请求的调用者
 
@@ -141,6 +142,13 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
 -(TCBaseApi * (^)(NSTimeInterval))l_limitRequestInterval {
     return ^(NSTimeInterval l_limitRequestInterval){
         self.limitRequestInterval = l_limitRequestInterval;
+        return self;
+    };
+}
+
+-(TCBaseApi * (^)(TCToastStype))l_toastStype {
+    return ^(TCToastStype l_toastStype){
+        self.toastStype = l_toastStype;
         return self;
     };
 }
@@ -484,8 +492,9 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
             } else if ([error isKindOfClass:NSError.class]){
                 errMsg = error.errorMessage;
             }
-            if (![self showCustomTost:(self.loadOnView ? : UIView.appWindow) text:errMsg]) {
-                [UIView.appWindow toastWithText:errMsg];
+            UIView *toastView = self.loadOnView ? : UIView.appWindow;
+            if (![self showCustomTost:toastView text:errMsg]) {
+                [toastView toastWithText:errMsg](self.toastStype);
             }
         }
     }
@@ -559,7 +568,7 @@ typedef void (^HEADPATCHSuccessBlock) (NSURLSessionDataTask *task);
     
     if (self.loadOnView) {
         if (![self showCustomTostLoading:self.loadOnView]) {
-            [self.loadOnView toastLoading];
+            [self.loadOnView toastLoading](self.toastStype);
         }
     }
     

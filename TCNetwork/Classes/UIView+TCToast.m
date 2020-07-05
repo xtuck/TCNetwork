@@ -43,13 +43,14 @@
 }
 
 
-- (void)toastWithText:(NSString *)text {
-    [self toastWithText:text hideAfterDelay:kToastDuration];
+- (void(^)(TCToastStype))toastWithText:(NSString *)text {
+    return [self toastWithText:text hideAfterDelay:kToastDuration];
 }
 
-- (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay {
+- (void(^)(TCToastStype))toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay {
+    MBProgressHUD *hud = nil;
     if (![self isEmptyStr:text]) {
-        MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self animated:YES];
+        hud = [MBProgressHUD showHUDAddedTo:self animated:YES];
         hud.mode = MBProgressHUDModeText;
         hud.label.numberOfLines = 0;
         hud.label.text = text;
@@ -57,21 +58,36 @@
         [hud hideAnimated:YES afterDelay:delay];
         hud.isHudDelayHide = YES;
     }
+    return ^(TCToastStype style){
+        [self configHud:hud style:style];
+    };
 }
 
-
-- (void)toastLoading {
-    [self toastLoadingWithText:nil];
+- (void(^)(TCToastStype))toastLoading {
+    return [self toastLoadingWithText:nil];
 }
 
-- (void)toastLoadingWithText:(NSString *)text {
-    if (self.isToastLoading) {
+- (void(^)(TCToastStype))toastLoadingWithText:(NSString *)text {
+    MBProgressHUD *hud = nil;
+    if (!self.isToastLoading) {
+        self.isToastLoading = YES;
+        hud = [MBProgressHUD showHUDAddedTo:self animated:YES];
+        if (![self isEmptyStr:text]) {
+            hud.label.text = text;
+        }
+    }
+    return ^(TCToastStype style){
+        [self configHud:hud style:style];
+    };
+}
+
+- (void)configHud:(MBProgressHUD *)hud style:(TCToastStype)style {
+    if (!hud) {
         return;
     }
-    self.isToastLoading = YES;
-    MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self animated:YES];
-    if (![self isEmptyStr:text]) {
-        hud.label.text = text;
+    if (style == TCToastStypeDark) {
+        hud.bezelView.blurEffectStyle = UIBlurEffectStyleDark;
+        hud.contentColor = [[UIColor whiteColor] colorWithAlphaComponent:0.7];
     }
 }
 

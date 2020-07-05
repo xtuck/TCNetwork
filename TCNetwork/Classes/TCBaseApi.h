@@ -97,6 +97,10 @@ typedef void (^DownloadProgressBlock) (NSProgress *downloadProgress);   //对应
 /// 限制请求的间隔时间，相同接口和相同参数，在间隔时间内重复调用时，后调用的将直接被忽略
 -(TCBaseApi * (^)(NSTimeInterval))l_limitRequestInterval;
 
+/// toast提示框的颜色样式：默认是TCToastStypeSystem：随系统暗黑模式变换，TCToastStypeDark：黑色样式
+-(TCBaseApi * (^)(TCToastStype))l_toastStype;
+
+
 /// 解析返回数据
 /// 参数1:解析结果中的model对应的class(如果是基本类型请传nil)，如果设置为nil，结果将返回response字典中的对应的原始值
 /// 参数2:解析时取值的key，如果设置为nil，取的是dataObjectKey对应的key值（例：data）

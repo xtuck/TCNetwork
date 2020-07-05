@@ -22,17 +22,23 @@
 
 #define kToastDuration 2
 
+typedef NS_ENUM(NSUInteger, TCToastStype) {
+    TCToastStypeSystem,
+    TCToastStypeDark,
+};
+
 @interface UIView (TCToast)
 
 
-- (void)toastWithText:(NSString *)text;
+- (void(^)(TCToastStype))toastWithText:(NSString *)text;
 
-- (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay;
+- (void(^)(TCToastStype))toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay;
 
 
-- (void)toastLoading;
+- (void(^)(TCToastStype))toastLoading;
 
-- (void)toastLoadingWithText:(NSString *)text;
+- (void(^)(TCToastStype))toastLoadingWithText:(NSString *)text;
+
 
 - (void)toastHide;
 
