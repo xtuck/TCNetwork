@@ -72,6 +72,8 @@
     if (!self.isToastLoading) {
         self.isToastLoading = YES;
         hud = [MBProgressHUD showHUDAddedTo:self animated:YES];
+        //这里可以考虑扩展容错机制，因外部调用toastLoading和toastHide没有正确配对，可能会造成屏幕锁住无法交互
+        //[self performSelector:@selector(toastHide) withObject:nil afterDelay:30];
         if (![self isEmptyStr:text]) {
             hud.label.text = text;
         }
@@ -87,7 +89,7 @@
     }
     if (style == TCToastStypeDark) {
         hud.bezelView.blurEffectStyle = UIBlurEffectStyleDark;
-        hud.contentColor = [[UIColor whiteColor] colorWithAlphaComponent:0.7];
+        hud.contentColor = [[UIColor whiteColor] colorWithAlphaComponent:0.9];
     }
 }
 

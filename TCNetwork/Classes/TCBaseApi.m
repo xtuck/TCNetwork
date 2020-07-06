@@ -675,7 +675,7 @@
         [self.delegate aspect_hookSelector:NSSelectorFromString(@"dealloc") withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> aspectInfo) {
             if (weakSelf.httpTask && weakSelf.httpTask.state != NSURLSessionTaskStateCompleted) {
                 [weakSelf.httpTask cancel];
-                if (self.printLog) {
+                if (weakSelf.printLog) {
                     NSLog(@"取消了一个请求:%@",weakSelf.httpTask.currentRequest.URL.absoluteString);
                 }
             }
