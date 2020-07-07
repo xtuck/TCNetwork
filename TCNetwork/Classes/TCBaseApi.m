@@ -219,6 +219,7 @@
 }
 
 //model解析
+//MARK:可以修改为通用的方法parseResult:cls key:key isArr:isArr 待后期完善
 - (void)parseResult {
     _resultParseObject = nil;
     NSObject *parseObj = nil;
