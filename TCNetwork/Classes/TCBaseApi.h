@@ -11,6 +11,7 @@
 #import "UIView+TCToast.h"
 #import "NSError+TCHelp.h"
 #import "NSString+TCHelp.h"
+#import "TCParseResult.h"
 
 
 typedef NS_ENUM(NSUInteger, TCHttpMethod) {
@@ -75,6 +76,7 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 ///承载loading的view
 -(TCBaseApi * (^)(UIView *))l_loadOnView;
 /// 参数1：承载loading的view， 参数2:发生错误时，是否toast显示错误提示信息
+/// MARK:isShowErr 改为 errLoadOnView 待实现
 -(TCBaseApi * (^)(UIView *, BOOL))l_loadOnView_isShowErr;
 
 -(TCBaseApi * (^)(id delegate))l_delegate;
@@ -112,11 +114,14 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 ///      支持多维数组取值：例：“list[0](1,2)[3](3,4)”,  [x]表示数组下标取值，(x,y)表示NSRange取值
 ///      如果parseKey最末尾是通过(x,y)来取值，则会强制将isArray变为YES
 /// 参数3:解析的值是否是数组，通常是列表数据使用较多
+/// MARK: 可以将isArray参数用 key+“()”来表示，减少一个参数，可以更规范化 增加静态方法：tc_sArray()
 -(TCBaseApi * (^)(Class,NSString *,BOOL))l_parseModelClass_parseKey_isArray;
 -(TCBaseApi * (^)(Class,NSString *))l_parseModelClass_parseKey;
 -(TCBaseApi * (^)(Class,BOOL))l_parseModelClass_isArray;
 -(TCBaseApi * (^)(Class))l_parseModelClass;
 
+-(TCBaseApi * (^)(Class,NSString *,BOOL,id flag))l_pClass_key_isArray_flag;//MARK:待实现<tuck-mark>
+- (id)fetchParseResultObjectWithFlag:(id)flag;//MARK:待实现<tuck-mark>
 
 //执行请求，请放在链式语法的最末尾
 
@@ -185,6 +190,7 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 
 /// 在TCBaseApi的子类中扩展属性，当对response进行解析时，会对扩展的属性进行赋值。（该方案不太规范，不推荐使用）
 /// 设置的class必须是当前self本身的class或其父类，且是TCBaseApi的子类，建议使用自己创建的继承于TCBaseApi的基类。不要扩展TCBaseApi已有的属性。
+/// MARK: 当属性已_拼接时，将参数分解为路径取值 待实现
 - (Class)propertyExtensionClass;
 
 /// 请求刚完毕时的结果检查，统一处理特殊业务，子类复写
