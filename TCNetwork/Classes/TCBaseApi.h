@@ -23,6 +23,13 @@ typedef NS_ENUM(NSUInteger, TCHttpMethod) {
     TCHttp_PATCH,
 };
 
+typedef NS_ENUM(NSUInteger, TCHttpCancelType) {
+    TCCancelByNone = 0,
+    TCCancelByURL,
+    TCCancelByURLAndParams,
+};
+
+
 typedef void (^FinishBlock) (id api);
 typedef NSError * (^InterceptorBlock) (id api);  //接口返回成功数据处理拦截器
 
@@ -38,7 +45,6 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 ///一般为http请求的调用者，作用：对象销毁后，其中的所有http请求都会自动取消
 @property (nonatomic,weak,readonly) id delegate;
 
-
 /// 执行http请求的task
 @property (nonatomic,readonly) NSURLSessionDataTask *httpTask;
 /// 是否正在请求中
@@ -50,10 +56,10 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 /// 执行请求前或结束后产生的错误信息,通过判断该属性是否为空，来识别请求结果是否成功
 @property (nonatomic,readonly) NSError *error;
 
-/// http返回数据字典中解析出的data对象
+/// http返回数据字典中解析出的data对象 = response[dataObjectKey]
 @property (nonatomic,readonly) id dataObject;
 
-/// http返回数据字典中解析出的其他对象，预留的拓展属性，一般不用
+/// http返回数据字典中解析出的其他对象 = response[otherObjectKey]
 @property (nonatomic,readonly) id otherObject;
 
 ///response中解析出的code
@@ -73,13 +79,16 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 /// 传入url各个组成部分，最后的参数需要传nil。避免使用者忘记传nil。
 +(TCBaseApi * (^)(NSString *,...))apiInitURLJoin;
 
-///承载loading的view
+///承载loading的view，同时也是承载错误信息tosat的view
 -(TCBaseApi * (^)(UIView *))l_loadOnView;
-/// 参数1：承载loading的view， 参数2:发生错误时，是否toast显示错误提示信息
-/// MARK:isShowErr 改为 errLoadOnView 待实现
--(TCBaseApi * (^)(UIView *, BOOL))l_loadOnView_isShowErr;
+/// 参数1：承载loading的view， 参数2:发生错误时，显示错误提示信息的toast所在的view
+-(TCBaseApi * (^)(UIView *, UIView *))l_loadOnView_errOnView;
+/// toast提示框的颜色样式，默认随暗黑模式切换
+-(TCBaseApi * (^)(TCToastStyle))l_toastStyle;
 
+/// 绑定delegate，目的在于delegate销毁时，未完成的请求自动取消
 -(TCBaseApi * (^)(id delegate))l_delegate;
+/// 设置http请求参数
 -(TCBaseApi * (^)(NSObject *))l_params;
 
 /// 自定义判定成功结果的code数组，优先级高于successCodes方法
@@ -103,8 +112,10 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 /// 限制请求的间隔时间，相同接口和相同参数，在间隔时间内重复调用时，后调用的将直接被忽略
 -(TCBaseApi * (^)(NSTimeInterval))l_limitRequestInterval;
 
-/// toast提示框的颜色样式：默认是TCToastStypeSystem：随系统暗黑模式变换，TCToastStypeDark：黑色样式
--(TCBaseApi * (^)(TCToastStype))l_toastStype;
+/// 在调用类似于筛选条件的接口时，当筛选条件发生变化时，应该只需要获取最后的筛选条件所请求的结果
+/// 所以此时可以将当前请求之前未完成的其他筛选条件的请求取消掉，达到优化网络的效果
+/// MARK:task执行取消的时候 已经被重建了 所以需要创建taskid，将task做持久化，逻辑有点复杂 待完善
+-(TCBaseApi * (^)(TCHttpCancelType))l_cancelRequestType;
 
 
 /// 解析返回数据
@@ -120,8 +131,9 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 -(TCBaseApi * (^)(Class,BOOL))l_parseModelClass_isArray;
 -(TCBaseApi * (^)(Class))l_parseModelClass;
 
--(TCBaseApi * (^)(Class,NSString *,BOOL,id flag))l_pClass_key_isArray_flag;//MARK:待实现<tuck-mark>
-- (id)fetchParseResultObjectWithFlag:(id)flag;//MARK:待实现<tuck-mark>
+
+-(TCBaseApi * (^)(Class,NSString *))l_parseClass_key;//MARK:待实现<tuck-mark>
+- (id)getParseResultForKey:(NSString *)key;//MARK:待实现<tuck-mark>
 
 //执行请求，请放在链式语法的最末尾
 

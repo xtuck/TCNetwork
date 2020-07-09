@@ -22,14 +22,17 @@
 
 @property (nonatomic,strong) NSObject *params;//执行http请求时传的参数
 @property (nonatomic,strong) NSArray *successCodeArray;//作用：用来判断返回结果是否是成功的结果，优先级高于successCodes方法
-@property (nonatomic,weak) UIView *loadOnView;
-@property (nonatomic,assign) BOOL isShowErr;//发生错误时，是否显示toast提示
+@property (nonatomic,weak) UIView *loadOnView; //显示loading提示的容器
+@property (nonatomic,weak) UIView *errOnView;//显示错误信息的toast容器
+
 @property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
 @property (nonatomic,assign) Class parseModelClass;//解析的返回数据中的model对应的class，当解析的返回数据为数组时，对应数组内的对象类型
 @property (nonatomic,assign) BOOL isParseArray;//解析的返回数据是否为数组
 @property (nonatomic,copy) NSString *parseKey;//解析的返回数据取值的key
 @property (nonatomic,assign) NSTimeInterval limitRequestInterval;//限制相同请求的间隔时间
-@property (nonatomic,assign) TCToastStype toastStype;//提示框颜色，默认是白色，支持暗黑模式变换。
+@property (nonatomic,assign) TCHttpCancelType cancelRequestType;//自动取消http请求的条件类型，默认不自动取消
+
+@property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色，默认是随UIUserInterfaceStyle变换。
 
 @property (nonatomic,weak) TCBaseApi *weakApi;//通过finishBlock回传给http请求的调用者
 
@@ -59,18 +62,23 @@
     };
 }
 
--(TCBaseApi * (^)(UIView *))l_loadOnView {
+-(TCBaseApi * (^)(UIView *l_loadOnView))l_loadOnView {
     return ^(UIView * l_loadOnView){
+        return self.l_loadOnView_errOnView(l_loadOnView,l_loadOnView);
+    };
+}
+
+-(TCBaseApi * (^)(UIView *, UIView *))l_loadOnView_errOnView {
+    return ^(UIView * l_loadOnView,UIView * l_errOnView){
         self.loadOnView = l_loadOnView;
-        self.isShowErr = l_loadOnView != nil;
+        self.errOnView = l_errOnView;
         return self;
     };
 }
 
--(TCBaseApi * (^)(UIView *, BOOL))l_loadOnView_isShowErr {
-    return ^(UIView * l_loadOnView,BOOL l_isShowErr){
-        self.loadOnView = l_loadOnView;
-        self.isShowErr = l_isShowErr;
+-(TCBaseApi * (^)(TCToastStyle))l_toastStyle {
+    return ^(TCToastStyle l_toastStyle){
+        self.toastStyle = l_toastStyle;
         return self;
     };
 }
@@ -133,9 +141,9 @@
     };
 }
 
--(TCBaseApi * (^)(TCToastStype))l_toastStype {
-    return ^(TCToastStype l_toastStype){
-        self.toastStype = l_toastStype;
+-(TCBaseApi * (^)(TCHttpCancelType))l_cancelRequestType {
+    return ^(TCHttpCancelType l_cancelRequestType){
+        self.cancelRequestType = l_cancelRequestType;
         return self;
     };
 }
@@ -357,7 +365,7 @@
         NSLog(@"http error:  %@", error);
     }
     
-    if (self.isShowErr) {
+    if (self.errOnView) {
         if (!_code.isNonEmpty && [error isKindOfClass:NSError.class]) {
             _code = [@(error.code) stringValue];
         }
@@ -372,9 +380,8 @@
             } else if ([error isKindOfClass:NSError.class]){
                 errMsg = error.localizedDescription;
             }
-            UIView *toastView = self.loadOnView ? : UIView.appWindow;
-            if (![self showCustomTost:toastView text:errMsg]) {
-                [toastView toastWithText:errMsg](self.toastStype);
+            if (![self showCustomTost:self.errOnView text:errMsg]) {
+                [self.errOnView toastWithText:errMsg](self.toastStyle);
             }
         }
     }
@@ -448,7 +455,7 @@
     
     if (self.loadOnView) {
         if (![self showCustomTostLoading:self.loadOnView]) {
-            [self.loadOnView toastLoading](self.toastStype);
+            [self.loadOnView toastLoading](self.toastStyle);
         }
     }
     

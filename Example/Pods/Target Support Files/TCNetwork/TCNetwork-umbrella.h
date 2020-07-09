@@ -15,6 +15,7 @@
 #import "NSString+TCHelp.h"
 #import "TCBaseApi.h"
 #import "TCHttpManager.h"
+#import "TCParseResult.h"
 #import "UIView+TCToast.h"
 
 FOUNDATION_EXPORT double TCNetworkVersionNumber;

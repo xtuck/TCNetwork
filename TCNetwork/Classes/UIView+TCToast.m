@@ -43,11 +43,11 @@
 }
 
 
-- (void(^)(TCToastStype))toastWithText:(NSString *)text {
+- (void(^)(TCToastStyle))toastWithText:(NSString *)text {
     return [self toastWithText:text hideAfterDelay:kToastDuration];
 }
 
-- (void(^)(TCToastStype))toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay {
+- (void(^)(TCToastStyle))toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay {
     MBProgressHUD *hud = nil;
     if (![self isEmptyStr:text]) {
         hud = [MBProgressHUD showHUDAddedTo:self animated:YES];
@@ -58,16 +58,16 @@
         [hud hideAnimated:YES afterDelay:delay];
         hud.isHudDelayHide = YES;
     }
-    return ^(TCToastStype style){
+    return ^(TCToastStyle style){
         [self configHud:hud style:style];
     };
 }
 
-- (void(^)(TCToastStype))toastLoading {
+- (void(^)(TCToastStyle))toastLoading {
     return [self toastLoadingWithText:nil];
 }
 
-- (void(^)(TCToastStype))toastLoadingWithText:(NSString *)text {
+- (void(^)(TCToastStyle))toastLoadingWithText:(NSString *)text {
     MBProgressHUD *hud = nil;
     if (!self.isToastLoading) {
         self.isToastLoading = YES;
@@ -78,16 +78,16 @@
             hud.label.text = text;
         }
     }
-    return ^(TCToastStype style){
+    return ^(TCToastStyle style){
         [self configHud:hud style:style];
     };
 }
 
-- (void)configHud:(MBProgressHUD *)hud style:(TCToastStype)style {
+- (void)configHud:(MBProgressHUD *)hud style:(TCToastStyle)style {
     if (!hud) {
         return;
     }
-    if (style == TCToastStypeDark) {
+    if (style == TCToastStyleDark) {
         hud.bezelView.blurEffectStyle = UIBlurEffectStyleDark;
         hud.contentColor = [[UIColor whiteColor] colorWithAlphaComponent:0.9];
     }
