@@ -12,6 +12,7 @@
 #import "NSError+TCHelp.h"
 #import "NSString+TCHelp.h"
 #import "TCParseResult.h"
+#import "TCNetworkHelp.h"
 
 
 typedef NS_ENUM(NSUInteger, TCHttpMethod) {
@@ -28,6 +29,7 @@ typedef NS_ENUM(NSUInteger, TCHttpCancelType) {
     TCCancelByURL,
     TCCancelByURLAndParams,
 };
+
 
 
 typedef void (^FinishBlock) (id api);
@@ -133,7 +135,7 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 
 
 -(TCBaseApi * (^)(Class,NSString *))l_parseClass_key;//MARK:待实现<tuck-mark>
-- (id)getParseResultForKey:(NSString *)key;//MARK:待实现<tuck-mark>
+- (id)parsedResultForKey:(NSString *)pKey;//MARK:待实现<tuck-mark>
 
 //执行请求，请放在链式语法的最末尾
 

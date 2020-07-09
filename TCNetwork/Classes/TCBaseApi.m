@@ -9,6 +9,7 @@
 #import <Aspects/Aspects.h>
 #import <objc/runtime.h>
 
+
 @interface TCBaseApi()
 
 @property (nonatomic,copy) FinishBlock originalFinishBlock;
@@ -226,8 +227,7 @@
     TCParseResult *model = [TCParseResult parseObject:self.response
                                          fullParseKey:fullKey
                                                 clazz:self.parseModelClass
-                                        isResultArray:self.isParseArray
-                                             parseEnd:nil];
+                                        isResultArray:self.isParseArray];
     _resultParseObject = model.parseResult;
     if (model.error) {
         [TCParseResult printDebugLog:model.error.localizedDescription];
