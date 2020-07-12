@@ -22,6 +22,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString * (^)(NSString *))l_joinURL;
 - (NSString *)jointUrlSuffix:(NSString *)suffixStr;
 
+//中文转换成url
+- (NSString *)toUrlCharacters;
+//url取消转换
+- (NSString *)undoUrlCharacters;
+
+//url拼接字典参数
+- (NSString * (^)(NSDictionary *))urlJoinDic;
 
 //******* pathWithComponents 方法拼接的url，会把url中的双斜杠变成单斜杠，但是不影响请求数据 *******//
 

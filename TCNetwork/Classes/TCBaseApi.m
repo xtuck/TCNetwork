@@ -9,6 +9,7 @@
 #import <Aspects/Aspects.h>
 #import <objc/runtime.h>
 
+static const char * kTCCancelHttpTaskKey;
 
 @interface TCBaseApi()
 
@@ -27,15 +28,14 @@
 @property (nonatomic,weak) UIView *errOnView;//显示错误信息的toast容器
 
 @property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
-@property (nonatomic,assign) Class parseModelClass;//解析的返回数据中的model对应的class，当解析的返回数据为数组时，对应数组内的对象类型
-@property (nonatomic,assign) BOOL isParseArray;//解析的返回数据是否为数组
-@property (nonatomic,copy) NSString *parseKey;//解析的返回数据取值的key
 @property (nonatomic,assign) NSTimeInterval limitRequestInterval;//限制相同请求的间隔时间
 @property (nonatomic,assign) TCHttpCancelType cancelRequestType;//自动取消http请求的条件类型，默认不自动取消
 
 @property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色，默认是随UIUserInterfaceStyle变换。
 
 @property (nonatomic,weak) TCBaseApi *weakApi;//通过finishBlock回传给http请求的调用者
+
+@property (nonatomic,strong) NSMutableArray *parseResultArray;//存储解析结果的数组，resultParseObject为数组中的第一个对象的属性值
 
 @end
 
@@ -157,24 +157,11 @@
 
 -(TCBaseApi * (^)(Class,NSString *))l_parseModelClass_parseKey {
     return ^(Class l_clazz,NSString *l_parseKey){
-        return self.l_parseModelClass_parseKey_isArray(l_clazz,l_parseKey,NO);
-    };
-}
-
--(TCBaseApi * (^)(Class,BOOL))l_parseModelClass_isArray {
-    return ^(Class l_clazz,BOOL l_isArray){
-        return self.l_parseModelClass_parseKey_isArray(l_clazz,nil,l_isArray);
-    };
-}
-
--(TCBaseApi * (^)(Class,NSString *,BOOL))l_parseModelClass_parseKey_isArray {
-    return ^(Class l_clazz,NSString * l_parseKey,BOOL l_isArray){
-        self.parseModelClass = l_clazz;
-        self.parseKey = l_parseKey;
-        self.isParseArray = l_isArray;
+        [self addParseModelClass:l_clazz parseKey:l_parseKey];
         return self;
     };
 }
+
 
 -(TCBaseApi * (^)(FinishBlock))apiCallOriginal {
     return ^(FinishBlock l_originalFinishBlock){
@@ -219,20 +206,89 @@
     _code = nil;
     _msg = nil;
     _time = nil;
+    
+    for (TCParseResult *model in _parseResultArray) {
+        model.error = nil;
+        model.parseResult = nil;
+    }
+}
+
+- (id)getParsedResultWithIndex:(NSUInteger)index err:(NSError **)err {
+    return [self getParsedResultWithFlagKey:(id)@(index) err:err];
+}
+
+- (id)getParsedResultWithFlagKey:(NSString *)flag err:(NSError **)err {
+    if (!flag || !_parseResultArray.count) {
+        return nil;
+    }
+    TCParseResult *model = nil;
+    if ([flag isKindOfClass:NSNumber.class]) {
+        NSUInteger index = flag.integerValue;
+        if (index<_parseResultArray.count) {
+            model = _parseResultArray[index];
+        }
+    } else if (flag.length){
+        for (TCParseResult *m in _parseResultArray) {
+            if ([m.parseFlag isEqualToString:flag]) {
+                model = m;
+                break;
+            }
+        }
+    }
+    if (err) {
+        *err = model.error;
+    }
+    return model.parseResult;
+}
+
+- (NSMutableArray *)parseResultArray {
+    if (!_parseResultArray) {
+        _parseResultArray = [NSMutableArray array];
+    }
+    return _parseResultArray;
+}
+
+- (void)addParseModelClass:(Class)clazz parseKey:(NSString *)key {
+    NSString *flag = nil;
+    NSString *tempKey = key;
+    if (key.length) {
+        NSInteger loc = [key rangeOfString:kParseFlag options:NSBackwardsSearch].location;
+        if (loc != NSNotFound) {
+            flag = [key substringFromIndex:loc+kParseFlag.length];
+            if (!flag.length) {
+                flag = kParseFlag;//允许使用kParseFlag作为标记
+            }
+            for (TCParseResult *m in _parseResultArray) {
+                if ([m.parseFlag isEqualToString:flag]) {
+                    [TCParseResult printDebugLog:[NSString stringWithFormat:@"需要解析的对象存在相同的flag:%@ 已被忽略",flag]];
+                    return;
+                }
+            }
+            tempKey = [key substringToIndex:loc];
+        }
+    }
+    TCParseResult *model = [[TCParseResult alloc] init];
+    model.parseModelClass = clazz;
+    model.originalParseKey = key;
+    model.parseFlag = flag;
+    model.withoutFlagParseKey = tempKey;
+    [self.parseResultArray addObject:model];
 }
 
 //model解析
 - (void)parseResult {
-    NSString *fullKey = [TCParseResult generateFullParseKey:[self dataObjectKey] parseKey:self.parseKey];;
-    TCParseResult *model = [TCParseResult parseObject:self.response
-                                         fullParseKey:fullKey
-                                                clazz:self.parseModelClass
-                                        isResultArray:self.isParseArray];
-    _resultParseObject = model.parseResult;
-    if (model.error) {
-        [TCParseResult printDebugLog:model.error.localizedDescription];
+    for (int i=0; i<_parseResultArray.count; i++) {
+        TCParseResult *model = _parseResultArray[i];
+        model.fullParseKey = [TCParseResult generateFullParseKey:[self dataObjectKey] parseKey:model.withoutFlagParseKey];
+        model.parseSource = self.response;
+        [model parse];
+        if (model.error) {
+            [TCParseResult printDebugLog:[NSString stringWithFormat:@"errCode:%ld\n%@",model.error.code,model.error.localizedDescription]];
+        }
+        if (i==0) {
+            _resultParseObject = model.parseResult;
+        }
     }
-    self.isParseArray = model.isFinalResultArray;
 }
 
 /**
@@ -366,23 +422,18 @@
     }
     
     if (self.errOnView) {
-        if (!_code.isNonEmpty && [error isKindOfClass:NSError.class]) {
-            _code = [@(error.code) stringValue];
-        }
-        if (_code.isNonEmpty &&  [self isContainsCode:_code arr:self.ignoreErrToastCodes]) {
-            if (self.printLog) {
-                NSLog(@"忽略了一个错误提示:  %@", _code);
-            }
-        } else {
+        if (![self isErrorIgnored]) {
             NSString *errMsg = nil;
             if ([error isKindOfClass:NSString.class]) {
                 errMsg = (id)error;
             } else if ([error isKindOfClass:NSError.class]){
                 errMsg = error.localizedDescription;
             }
-            if (![self showCustomTost:self.errOnView text:errMsg]) {
-                [self.errOnView toastWithText:errMsg](self.toastStyle);
-            }
+            [self mainThreadExe:^{
+                if (![self showCustomTost:self.errOnView text:errMsg]) {
+                    [self.errOnView toastWithText:errMsg](self.toastStyle);
+                }
+            }];
         }
     }
     
@@ -393,12 +444,90 @@
     }
 }
 
+- (BOOL)isErrorIgnored {
+    if (!_code.isNonEmpty && [_error isKindOfClass:NSError.class]) {
+        _code = [@(_error.code) stringValue];
+    }
+    if (_code.isNonEmpty && [self isContainsCode:_code arr:self.ignoreErrToastCodes]) {
+        if (self.printLog) {
+            NSLog(@"忽略了一个错误提示:  %@", _code);
+        }
+        return YES;
+    }
+    return NO;
+}
+
 - (void)stopLoading {
     if (self.loadOnView) {
-        if (![self hideCustomTost:self.loadOnView]) {
-            [self.loadOnView toastHide];
+        [self mainThreadExe:^{
+            if (![self hideCustomTost:self.loadOnView]) {
+                [self.loadOnView toastHide];
+            }
+        }];
+    }
+}
+
+
+- (NSMutableDictionary *)storeTaskDictionary {
+    static NSMutableDictionary *taskDictionary = nil;
+    if (!taskDictionary) {
+        taskDictionary = [NSMutableDictionary dictionary];
+    }
+    return taskDictionary;
+}
+
+- (dispatch_semaphore_t)cancelTaskLock {
+    static dispatch_semaphore_t lock;
+    if (!lock) {
+        lock = dispatch_semaphore_create(0);
+    }
+    return lock;
+}
+
+- (dispatch_queue_t)cancelTaskQueue {
+    static dispatch_queue_t queue;
+    if (!queue) {
+        queue = dispatch_queue_create("com.TCNetwork.cancelTaskQueue", DISPATCH_QUEUE_SERIAL);
+    }
+    return queue;
+}
+
+
+- (NSString *)cancelTaskKey:(NSDictionary *)params  {
+    if (self.cancelRequestType == TCCancelByNone) {
+        return nil;
+    }
+    NSString *keyStr = nil;
+    if (self.cancelRequestType == TCCancelByURL) {
+        if (!self.URLFull) {
+            return nil;
+        }
+        NSInteger loc = [self.URLFull rangeOfString:@"?"].location;
+        if (loc != NSNotFound) {
+            keyStr = [self.URLFull substringToIndex:loc];
+        } else {
+            keyStr = self.URLFull;
+        }
+    } else if (self.cancelRequestType == TCCancelByURLAndParams){
+        keyStr = [NSString stringWithFormat:@"%@:%@",self.URLFull,params];
+    }
+    return keyStr;
+}
+
+- (NSString *)checkCancelRequestWithParams:(NSDictionary *)params cancel:(NSURLSessionDataTask **)cancelTask {
+    NSString *keyStr = [self cancelTaskKey:params];
+    if (keyStr.length) {
+        NSURLSessionDataTask *task = [self.storeTaskDictionary objectForKey:keyStr];
+        if (task) {
+            [self.storeTaskDictionary removeObjectForKey:keyStr];
+            if (task.state != NSURLSessionTaskStateCompleted) {
+                if (cancelTask) {
+                    *cancelTask = task;
+                }
+            }
         }
     }
+    return keyStr;
 }
 
 //如果有特殊需求，也可以在子类中重写此方法，返回error，来限制http请求
@@ -410,18 +539,18 @@
             limitDic = [NSMutableDictionary dictionary];
         }
         NSTimeInterval currentTime = CACurrentMediaTime();
-        NSString *paramStr = [NSString stringWithFormat:@"%@:%@",self.URLFull,params];
-        NSString *keyStr = paramStr.md5HexLower;
+        NSString *keyStr = [NSString stringWithFormat:@"%@:%@",self.URLFull,params];
+        //NSString *keyStr = paramStr.md5HexLower;
         NSNumber *lastTime = limitDic[keyStr];
         if (lastTime && currentTime - lastTime.doubleValue < self.limitRequestInterval) {
             //限制
             if (self.printLog) {
-                NSLog(@"%@秒内的重复请求已被忽略：%@\n%@",@(self.limitRequestInterval),keyStr,paramStr);
+                NSLog(@"%@秒内的重复请求已被忽略：%@",@(self.limitRequestInterval),keyStr);
             }
             return [NSError errorCode:@"-999" msg:@"请求过于频繁，已取消"];
         } else {
             //不限制
-            if (limitDic.allKeys.count>100) {
+            if (limitDic.count>100) {
                 [limitDic removeAllObjects];
             }
             [limitDic setValue:@(currentTime) forKey:keyStr];
@@ -452,102 +581,160 @@
         [self handleError:err];
         return;
     }
-    
-    if (self.loadOnView) {
-        if (![self showCustomTostLoading:self.loadOnView]) {
-            [self.loadOnView toastLoading](self.toastStyle);
-        }
-    }
-    
-    _isRequesting = YES;
-    
-    [self configHttpManager:[TCHttpManager sharedAFManager]];
+    NSURLSessionDataTask *cancelTask = nil;
+    NSString *cancelKey = [self checkCancelRequestWithParams:(id)postParams cancel:&cancelTask];
+            
+    dispatch_block_t requestBlock = ^{
+        void (^removeCancelTask)(NSURLSessionDataTask *) = ^(NSURLSessionDataTask *task) {
+            if (cancelKey.length) {
+                NSURLSessionDataTask *lastTask = [self.storeTaskDictionary objectForKey:cancelKey];
+                if (lastTask == task) {
+                    [self.storeTaskDictionary removeObjectForKey:cancelKey];
+                }
+            }
+        };
+
+        //下面的block中需要用self，延长实例生命周期
+        void (^success)(NSURLSessionDataTask *, id) = ^(NSURLSessionDataTask *task, id response) {
+            removeCancelTask(task);
+            [self handleResponse:response];
+        };
+        void (^failure)(NSURLSessionDataTask *, NSError *) = ^(NSURLSessionDataTask *task, NSError *error) {
+            removeCancelTask(task);
+            NSError *err = [self requestFinish:self.weakApi];
+            if (err) {
+                [self handleError:err];
+            } else {
+                [self handleError:error];
+            }
+            NSNumber *isByTCCancel = objc_getAssociatedObject(task, &kTCCancelHttpTaskKey);
+            if (isByTCCancel.boolValue) {
+                objc_setAssociatedObject(cancelTask, &kTCCancelHttpTaskKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                if (self.printLog) {
+                    NSLog(@"一个请求已被自动取消:%p \n cancelKey:%@",self,cancelKey);
+                }
+                dispatch_semaphore_signal(self.cancelTaskLock);//解锁
+            }
+        };
         
-    //下面的block中需要用self，延长实例生命周期
-    void (^success)(NSURLSessionDataTask *, id) = ^(NSURLSessionDataTask *task, id response) {
-        [self handleResponse:response];
-    };
-    void (^failure)(NSURLSessionDataTask *, NSError *) = ^(NSURLSessionDataTask *task, NSError *error) {
-        NSError *err = [self requestFinish:self.weakApi];
-        if (err) {
-            [self handleError:err];
-        } else {
-            [self handleError:error];
+        if (self.loadOnView) {
+            [self mainThreadExe:^{
+                if (![self showCustomTostLoading:self.loadOnView]) {
+                    [self.loadOnView toastLoading](self.toastStyle);
+                }
+            }];
         }
-    };
-    
-    NSMutableDictionary *headers = [NSMutableDictionary dictionary];
-    [self configRequestHeaders:headers];
-    
-    if (self.multipartBlock) {
-        //只有post支持上传文件
-        _httpTask = [[TCHttpManager sharedAFManager] POST:self.URLFull
+        
+        self->_isRequesting = YES;
+        
+        [self configHttpManager:[self.class HTTPManager]];
+            
+        
+        NSMutableDictionary *headers = [NSMutableDictionary dictionary];
+        [self configRequestHeaders:headers];
+        
+        NSURLSessionDataTask *sTask = nil;
+        if (self.multipartBlock) {
+            //只有post支持上传文件
+            sTask = [[self.class HTTPManager] POST:self.URLFull
+                                        parameters:postParams
+                                           headers:headers
+                         constructingBodyWithBlock:self.multipartBlock
+                                          progress:self.progressBlock
+                                           success:success
+                                           failure:failure];
+        } else {
+            switch (self.httpMethod) {
+                case TCHttp_POST:
+                    sTask = [[self.class HTTPManager] POST:self.URLFull
+                                                parameters:postParams
+                                                   headers:headers
+                                                  progress:self.progressBlock
+                                                   success:success
+                                                   failure:failure];
+                    break;
+                case TCHttp_GET:
+                    sTask = [[self.class HTTPManager] GET:self.URLFull
                                                parameters:postParams
                                                   headers:headers
-                                constructingBodyWithBlock:self.multipartBlock
                                                  progress:self.progressBlock
                                                   success:success
                                                   failure:failure];
-    } else {
-        switch (self.httpMethod) {
-            case TCHttp_POST:
-                _httpTask = [[TCHttpManager sharedAFManager] POST:self.URLFull
-                                                       parameters:postParams
-                                                          headers:headers
-                                                         progress:self.progressBlock
-                                                          success:success
-                                                          failure:failure];
-                break;
-            case TCHttp_GET:
-                _httpTask = [[TCHttpManager sharedAFManager] GET:self.URLFull
-                                                      parameters:postParams
-                                                         headers:headers
-                                                        progress:self.progressBlock
-                                                         success:success
-                                                         failure:failure];
-                break;
-            case TCHttp_PUT:
-                _httpTask = [[TCHttpManager sharedAFManager] PUT:self.URLFull
-                                                      parameters:postParams
-                                                         headers:headers
-                                                         success:success
-                                                         failure:failure];
-                break;
-            case TCHttp_DELETE:
-                _httpTask = [[TCHttpManager sharedAFManager] DELETE:self.URLFull
-                                                         parameters:postParams
-                                                            headers:headers
-                                                            success:success
-                                                            failure:failure];
-                break;
-            case TCHttp_PATCH:
-                _httpTask = [[TCHttpManager sharedAFManager] PATCH:self.URLFull
-                                                        parameters:postParams
-                                                           headers:headers
-                                                           success:success
-                                                           failure:failure];
-                break;
-            case TCHttp_HEAD: {
-                void (^hpSuccess)(NSURLSessionDataTask *) = ^(NSURLSessionDataTask *task) {
-                    success(task,@"success");
-                };
-                _httpTask = [[TCHttpManager sharedAFManager] HEAD:self.URLFull
-                                                       parameters:postParams
-                                                          headers:headers
-                                                          success:hpSuccess
-                                                          failure:failure];
+                    break;
+                case TCHttp_PUT:
+                    sTask = [[self.class HTTPManager] PUT:self.URLFull
+                                               parameters:postParams
+                                                  headers:headers
+                                                  success:success
+                                                  failure:failure];
+                    break;
+                case TCHttp_DELETE:
+                    sTask = [[self.class HTTPManager] DELETE:self.URLFull
+                                                  parameters:postParams
+                                                     headers:headers
+                                                     success:success
+                                                     failure:failure];
+                    break;
+                case TCHttp_PATCH:
+                    sTask = [[self.class HTTPManager] PATCH:self.URLFull
+                                                 parameters:postParams
+                                                    headers:headers
+                                                    success:success
+                                                    failure:failure];
+                    break;
+                case TCHttp_HEAD: {
+                    void (^hpSuccess)(NSURLSessionDataTask *) = ^(NSURLSessionDataTask *task) {
+                        success(task,@"success");
+                    };
+                    sTask = [[self.class HTTPManager] HEAD:self.URLFull
+                                                parameters:postParams
+                                                   headers:headers
+                                                   success:hpSuccess
+                                                   failure:failure];
+                }
+                    break;
+                default:
+                    //如果method设置错误
+                    [self handleError:NSError.httpMethodError];
+                    break;
             }
-                break;
-            default:
-                //如果method设置错误
-                [self handleError:NSError.httpMethodError];
-                break;
         }
-    }
-    [self autoCancelTask];
+        self->_httpTask = sTask;
+        if (sTask && cancelKey.length) {
+            if (self.storeTaskDictionary.count>20) {
+                [self.storeTaskDictionary removeAllObjects];
+            }
+            [self.storeTaskDictionary setObject:sTask forKey:cancelKey];
+        }
+        
+        [self autoCancelTask];
+        
+        if (self.printLog) {
+            NSLog(@"Request header: %@\n method: %@\n path: %@\n params: %@",
+                  self.httpTask.originalRequest.allHTTPHeaderFields, self.httpTask.originalRequest.HTTPMethod, self.URLFull, postParams);
+        }
+    };
     
-    if (self.printLog) {
-        NSLog(@"Request header: %@\n path: %@\n params: %@",_httpTask.originalRequest.allHTTPHeaderFields, self.URLFull, postParams);
+    if (cancelTask) {
+        //存在被取消的请求
+        if (self.printLog) {
+            NSLog(@"存在被取消的请求:%p \n cancelKey:%@",self,cancelKey);
+        }
+        objc_setAssociatedObject(cancelTask, &kTCCancelHttpTaskKey, @(YES), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        [cancelTask cancel]; //取消操作会异步执行failureBlock
+        NSThread *currentThread =  [NSThread currentThread];
+        dispatch_async(self.cancelTaskQueue, ^{
+            dispatch_semaphore_wait(self.cancelTaskLock, DISPATCH_TIME_FOREVER);//加锁
+            [self performSelector:@selector(exeBlock:) onThread:currentThread withObject:requestBlock waitUntilDone:YES modes:@[NSRunLoopCommonModes]];
+        });
+    } else {
+        requestBlock();
+    }
+}
+
+- (void)exeBlock:(dispatch_block_t)block {
+    if (block) {
+        block();
     }
 }
 
@@ -566,7 +753,18 @@
     }
 }
 
-
+- (void)mainThreadExe:(dispatch_block_t)block {
+    if (!block) {
+        return;
+    }
+    if ([NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            block();
+        });
+    }
+}
 
 
 #pragma mark -----子类可重写，进行自定义设置
@@ -591,6 +789,25 @@
 #endif
     return NO;
 }
+
+
+/// 如果对基类的HTTPManager不满意，可以自己在子类中重写
++ (AFHTTPSessionManager *)HTTPManager {
+    static AFHTTPSessionManager *manager = nil;
+    if (!manager) {
+        manager = [AFHTTPSessionManager manager];
+        //允许非权威机构颁发的证书
+        manager.securityPolicy.allowInvalidCertificates = YES;
+        //也不验证域名一致性
+        manager.securityPolicy.validatesDomainName = NO;
+        manager.requestSerializer.timeoutInterval = kHttpRequestTimeoutInterval;
+        manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"text/plain", @"multipart/form-data", @"application/json",
+                                                             @"text/html", @"image/jpeg", @"image/png",
+                                                             @"application/octet-stream", @"text/json",@"text/javascript",nil];
+    }
+    return manager;
+}
+
 
 - (NSError *)checkHttpCanRequest {
     return nil;

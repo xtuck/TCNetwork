@@ -31,6 +31,37 @@
     return md5;
 }
 
+- (NSString *)toUrlCharacters {
+    NSString *urlStr = [self copy];
+    urlStr = [self stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    return urlStr;
+}
+
+- (NSString *)undoUrlCharacters {
+    NSString *urlStr = [self copy];
+    urlStr = [self stringByRemovingPercentEncoding];
+    return urlStr;
+}
+
+- (NSString * (^)(NSDictionary *))urlJoinDic {
+    return ^(NSDictionary *params){
+        if (!params.count) {
+            return self;
+        }
+        NSMutableArray *mutablePairs = [NSMutableArray array];
+        for (NSString *key in params.allKeys) {
+            NSString *pairs = [NSString stringWithFormat:@"%@=%@",key,params[key]];
+            [mutablePairs addObject:pairs];
+        }
+        NSString *paramsStr = [mutablePairs componentsJoinedByString:@"&"];
+        NSString *joinStr = @"?";
+        if ([self containsString:joinStr]) {
+            joinStr = @"&";
+        }
+        return [NSString stringWithFormat:@"%@%@%@",self,joinStr,paramsStr];
+    };
+}
+
 - (NSString * (^)(NSString *))l_joinURL {
     return ^(NSString *suffix){
         return [self jointUrlSuffix:suffix];

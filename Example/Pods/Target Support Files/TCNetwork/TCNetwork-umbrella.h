@@ -11,7 +11,6 @@
 #endif
 
 #import "TCBaseApi.h"
-#import "TCHttpManager.h"
 #import "NSError+TCHelp.h"
 #import "NSMutableDictionary+paramsSet.h"
 #import "NSString+TCHelp.h"
