@@ -13,6 +13,7 @@ typedef NS_ENUM(NSInteger,TCCustomApiErrorCode) {
     APIErrorCode_HttpMethodError=-1971,       //请求方法设置错误
     APIErrorCode_DataFormatError=-1980,       //返回数据格式有误
     APIErrorCode_ParseParamError=-1981,       //解析参数设置错误
+    APIErrorCode_HttpCancel=-999,             //http请求被取消
 };
 
 @interface NSError (TCHelp)

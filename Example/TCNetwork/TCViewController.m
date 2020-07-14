@@ -17,8 +17,61 @@
 
 @implementation TCViewController
 
+- (void)exeBlock:(dispatch_block_t)block {
+    if (block) {
+        block();
+    }
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
+    //线程测试
+    dispatch_semaphore_t lock = dispatch_semaphore_create(0);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        dispatch_semaphore_signal(lock);
+    });
+    
+    dispatch_queue_t queue = dispatch_queue_create("cancelhttptask11111", DISPATCH_QUEUE_SERIAL);
+
+    dispatch_queue_t queue2 = dispatch_queue_create("cancelhttptask22222", DISPATCH_QUEUE_SERIAL);
+
+    dispatch_async(queue, ^{
+       
+        dispatch_block_t tBlock = ^{
+            NSThread *t2 = [NSThread currentThread];
+            NSLog(@"线程测试11111:%@",t2.description);
+        };
+        
+        NSThread *t1 = [NSThread currentThread];
+        NSLog(@"线程测试000000:%@",t1.description);
+        
+        if ([NSThread isMainThread]) {
+            dispatch_async(queue2, ^{
+                NSThread *t3 = [NSThread currentThread];
+                NSLog(@"线程测试33333:%@",t3.description);
+                dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER);
+                [self performSelector:@selector(exeBlock:) onThread:t1  withObject:tBlock waitUntilDone:YES modes:@[NSRunLoopCommonModes]];
+            });
+
+        } else{
+            dispatch_sync(queue2, ^{
+                NSThread *t3 = [NSThread currentThread];
+                NSLog(@"线程测试33333:%@",t3.description);
+                dispatch_semaphore_wait(lock, DISPATCH_TIME_FOREVER);
+                [self performSelector:@selector(exeBlock:) onThread:t1  withObject:tBlock waitUntilDone:YES modes:@[NSRunLoopCommonModes]];
+            });
+
+        }
+
+    });
+    
+    return;
+    
+    
+    
+    
+    
+    
     self.view.backgroundColor = [UIColor lightGrayColor];
     [self.view toastWithText:@"即将自动登录" hideAfterDelay:2];
 

@@ -14,6 +14,8 @@
     重要数据提交时，不想用户返回界面，使用[UIView.appWindow toastLoading]
     非重要数据请求时，如果允许用户返回，使用[UIView.currentView toastLoading] 或直接使用想要显示loading的容器view
 
+ 3，经验证toastLoading添加时，会阻塞主线程，耗时10毫秒左右
+
  */
 
 

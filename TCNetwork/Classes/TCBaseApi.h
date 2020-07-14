@@ -38,6 +38,8 @@ typedef NSError * (^InterceptorBlock) (id api);  //接口返回成功数据处�
 typedef void (^MultipartBlock) (id<AFMultipartFormData> formData);      //上传文件使用
 typedef void (^ProgressBlock) (NSProgress *progress);                   //请求处理进度
 
+typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableDictionary *headers);
+
 
 /// 执行http请求的基类，使用时，请继承该类
 @interface TCBaseApi : NSObject
@@ -87,8 +89,10 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 //MARK:- toastView相关设置
 ///承载loading的view，同时也是承载错误信息tosat的view
 -(TCBaseApi * (^)(UIView *))l_loadOnView;
+
 /// 参数1：承载loading的view， 参数2:发生错误时，显示错误提示信息的toast所在的view
 -(TCBaseApi * (^)(UIView *, UIView *))l_loadOnView_errOnView;
+
 /// toast提示框的颜色样式，默认随暗黑模式切换
 -(TCBaseApi * (^)(TCToastStyle))l_toastStyle;
 
@@ -97,14 +101,14 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 
 /// 绑定delegate，目的在于delegate销毁时，未完成的请求自动取消
 -(TCBaseApi * (^)(id delegate))l_delegate;
+
 /// 设置http请求参数
 -(TCBaseApi * (^)(NSObject *))l_params;
 
-/// 自定义判定成功结果的code数组，优先级高于successCodes方法
-/// 作用：当你把多个接口写在同一个接口类里面的时候，各个接口可能有不同的判断成功的code
--(TCBaseApi * (^)(NSArray *))l_successCodeArray;
-
+/// 上传文件等使用，通过调用<AFMultipartFormData>formData的appendPartWith...方法来上传data
 -(TCBaseApi * (^)(MultipartBlock))l_multipartBlock;
+
+/// 通用的请求进度的block
 -(TCBaseApi * (^)(ProgressBlock))l_progressBlock;
 
 /// 接口返回成功数据处理拦截器,会在apiCall的block执行之前调用，通常用来处理一些通用逻辑。
@@ -150,6 +154,29 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 /// 回传的结果是当前执行请求的对象TCBaseApi，TCBaseApi基类已经做了请求成功的判断
 /// 针对某些只处理请求成功情况的请求，简化代码。
 -(TCBaseApi * (^)(FinishBlock))apiCallSuccess;
+
+
+//MARK:- Extensions  以下五个方法，是为了支持以非继承的方式来使用TCBaseApi
+
+/// 用来解析code，msg，time，dataObject，otherObject
+/// 优先级高于codeKey，msgKey，timeKey，dataObjectKey，otherObjectKey方法
+/// 注意：parseKeyMap中的key应该是：kDCodeKey，kDMsgKey，kDTimeKey，kDDataKey，kDOtherKey,其他的无效
+/// 不想通过子类来重写codeKey，msgKey，dataObjectKey等方法时，可以用该方法来设置对应的key
+-(TCBaseApi * (^)(NSDictionary *))l_parseKeyMap;
+
+/// 自定义判定成功结果的code数组，优先级高于successCodes方法
+/// 作用：当你把多个接口写在同一个接口类里面的时候，各个接口可能有不同的判断成功的code
+-(TCBaseApi * (^)(NSArray *))l_successCodeArray;
+
+/// 忽略错误提示的code数组，优先级高于ignoreErrToastCodes方法
+/// 不想通过子类来重写ignoreErrToastCodes方法时，可以用该方法来设置忽略错误提示的code
+-(TCBaseApi * (^)(NSArray *))l_ignoreErrToastCodeArray;
+
+/// 配置HTTPManager和headers
+-(TCBaseApi * (^)(ConfigHttpManagerBlock))l_configHttpManagerBlock;
+
+/// 请求结束后执行，在通过code判定成功和失败之前调用，用来处理一些通用逻辑
+-(TCBaseApi * (^)(InterceptorBlock))l_requestFinishBlock;
 
 
 //MARK:- 请求完毕后可调用的实例方法

@@ -8,6 +8,13 @@
 #import "TCNetworkHelp.h"
 #import <objc/runtime.h>
 
+NSString * const kDCodeKey = @"code";
+NSString * const kDMsgKey = @"msg";
+NSString * const kDTimeKey = @"time";
+NSString * const kDDataKey = @"data";
+NSString * const kDOtherKey = @"other";
+
+
 NSString * const kParseArray = @"()";//指定解析结果为数组
 NSString * const kParseRoot = @"~";//解析原始的httpResponse
 NSString * const kParseData = @"#";//解析dataObjectKey对应的数据

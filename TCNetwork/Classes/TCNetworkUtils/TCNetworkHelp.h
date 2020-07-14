@@ -7,6 +7,13 @@
 
 #import <Foundation/Foundation.h>
 
+extern NSString * const kDCodeKey;
+extern NSString * const kDMsgKey;
+extern NSString * const kDTimeKey;
+extern NSString * const kDDataKey;
+extern NSString * const kDOtherKey;
+
+
 extern NSString * const kParseArray;//指定解析结果为数组
 extern NSString * const kParseRoot;//解析原始的httpResponse
 extern NSString * const kParseData;//解析dataObjectKey对应的数据

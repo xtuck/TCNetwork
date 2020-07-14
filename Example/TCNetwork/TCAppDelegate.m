@@ -35,11 +35,11 @@
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-    __block CheckVersionApi *api = (CheckVersionApi *)[CheckVersionApi checkVersion].apiCallSuccess(^(NSDictionary *res) {
-        NSLog(@"获取到版本检测的返回结果：\n%@",res);
-        NSString *msg = api.msg;
-        NSLog(@"赋值结果:%@",msg);
-    });
+//    __block CheckVersionApi *api = (CheckVersionApi *)[CheckVersionApi checkVersion].apiCallSuccess(^(NSDictionary *res) {
+//        NSLog(@"获取到版本检测的返回结果：\n%@",res);
+//        NSString *msg = api.msg;
+//        NSLog(@"赋值结果:%@",msg);
+//    });
 
 }
 
