@@ -91,6 +91,8 @@ typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableD
 -(TCBaseApi * (^)(UIView *))l_loadOnView;
 
 /// 参数1：承载loading的view， 参数2:发生错误时，显示错误提示信息的toast所在的view
+/// 注意：当在子线程中调用api请求时，如果需要传递ViewController的self.view时，该self.view需要在主线程中调用，
+///      拿到对应的view后再传递参数，具体原因，请看ViewController的view属性相关的官方介绍
 -(TCBaseApi * (^)(UIView *, UIView *))l_loadOnView_errOnView;
 
 /// toast提示框的颜色样式，默认随暗黑模式切换

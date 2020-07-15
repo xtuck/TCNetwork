@@ -669,15 +669,7 @@ static const char * kTCCancelHttpTaskKey;
                 dispatch_semaphore_signal(self.cancelTaskLock);//解锁
             }
         };
-        
-        if (self.loadOnView) {
-            [self mainThreadExe:^{
-                if (![self showCustomTostLoading:self.loadOnView]) {
-                    [self.loadOnView toastLoading](self.toastStyle);
-                }
-            }];
-        }
-        
+                
         self->_isRequesting = YES;
         
         [self configHttpManager:[self.class HTTPManager]];
@@ -755,6 +747,7 @@ static const char * kTCCancelHttpTaskKey;
                     break;
             }
         }
+        
         self->_httpTask = sTask;
         if (sTask && cancelKey.length) {
             if (self.storeTaskDictionary.count>20) {
@@ -768,6 +761,15 @@ static const char * kTCCancelHttpTaskKey;
         if (self.printLog) {
             NSLog(@"Request header: %@\n method: %@\n path: %@\n params: %@",
                   self.httpTask.originalRequest.allHTTPHeaderFields, self.httpTask.originalRequest.HTTPMethod, self.URLFull, postParams);
+        }
+        
+        //MBProgressHUD show会耗时10毫秒左右，所以放在后面执行
+        if (self.loadOnView) {
+            [self mainThreadExe:^{
+                if (![self showCustomTostLoading:self.loadOnView]) {
+                    [self.loadOnView toastLoading](self.toastStyle);
+                }
+            }];
         }
     };
     
@@ -813,17 +815,13 @@ static const char * kTCCancelHttpTaskKey;
     if (!block) {
         return;
     }
-    //MBProgressHUD show会耗时10毫秒左右，所以异步执行
-    dispatch_async(dispatch_get_main_queue(), ^{
+    if ([NSThread isMainThread]) {
         block();
-    });
-//    if ([NSThread isMainThread]) {
-//        block();
-//    } else {
-//        dispatch_async(dispatch_get_main_queue(), ^{
-//            block();
-//        });
-//    }
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            block();
+        });
+    }
 }
 
 
