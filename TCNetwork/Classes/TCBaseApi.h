@@ -119,7 +119,7 @@ typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableD
 ///      同个接口，多个地方调用，可以在interceptorBlock中广播通知，执行通用逻辑。
 /// 该block只会在handleSuccess中执行，即解析数据为成功状态，才会执行。
 /// 通过返回的error来控制最终的返回结果是成功还是失败
--(TCBaseApi * (^)(InterceptorBlock))l_interceptorBlock;
+-(TCBaseApi * (^)(InterceptorBlock))l_successResultInterceptorBlock;
 
 /// 设置http请求的method,不设置的话，默认是post
 -(TCBaseApi * (^)(TCHttpMethod method))l_httpMethod;
@@ -250,7 +250,7 @@ typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableD
 /// 设置的class必须是当前self本身的class或其父类，且是TCBaseApi的子类，建议使用自己创建的继承于TCBaseApi的基类。不要扩展TCBaseApi已有的属性。
 - (Class)propertyExtensionClass;
 
-/// 请求刚完毕时的结果检查，统一处理特殊业务，子类复写
+/// 请求刚完毕时的结果检查，统一处理特殊业务，会在通过code判定成功和失败之前执行，子类复写
 /// @param api 当前请求的api接口对象,需要用的数据都在该api的属性中
 - (NSError *)requestFinish:(TCBaseApi *)api;
 

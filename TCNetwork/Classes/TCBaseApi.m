@@ -20,7 +20,7 @@ static const char * kTCCancelHttpTaskKey;
 @property (nonatomic,copy) MultipartBlock multipartBlock;
 @property (nonatomic,copy) ProgressBlock progressBlock;
 
-@property (nonatomic,copy) InterceptorBlock interceptorBlock;
+@property (nonatomic,copy) InterceptorBlock successResultInterceptorBlock;
 
 @property (nonatomic,copy) ConfigHttpManagerBlock configHttpManagerBlock;
 @property (nonatomic,copy) InterceptorBlock requestFinishBlock;
@@ -101,9 +101,9 @@ static const char * kTCCancelHttpTaskKey;
     };
 }
 
--(TCBaseApi * (^)(InterceptorBlock))l_interceptorBlock {
+-(TCBaseApi * (^)(InterceptorBlock))l_successResultInterceptorBlock {
     return ^(InterceptorBlock l_interceptorBlock){
-        self.interceptorBlock = l_interceptorBlock;
+        self.successResultInterceptorBlock = l_interceptorBlock;
         return self;
     };
 }
@@ -447,8 +447,8 @@ static const char * kTCCancelHttpTaskKey;
 
 - (void)handleSuccess {
     _isRequesting = NO;
-    if (self.interceptorBlock) {
-        NSError *error = self.interceptorBlock(self.weakApi);
+    if (self.successResultInterceptorBlock) {
+        NSError *error = self.successResultInterceptorBlock(self.weakApi);
         if (error) {
             [self handleError:error];
             return;

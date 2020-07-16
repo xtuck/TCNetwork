@@ -10,7 +10,7 @@
 #import "CocoaSecurity.h"
 
 
-#pragma mark - 字符串参数也可以写在自己的宏配置文件中，便于统一管理维护
+#pragma mark - 字符串参数也可以写在自己的其他独立的配置文件中，便于统一管理维护
 
 @implementation MyBaseApi
 

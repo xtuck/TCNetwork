@@ -96,67 +96,92 @@
 
     //如果parseKey最末尾是通过(x,y)来取值或者末尾是"()"，则指定最终解析结果为数组
     BOOL isParseArray = [self.fullParseKey hasSuffix:@")"];
+    //容错处理，避免外部调用array的方法时崩溃
+    if ((isParseArray || [self.parseModelClass isSubclassOfClass:NSArray.class]) && ![resultDic isKindOfClass:NSArray.class]) {
+        NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 指定结果为数组 \n 解析出的数据为非数组:%@",self.fullParseKey,resultDic];
+        _error = [NSError errorCode:@"-16811" msg:errMsg];
+        return;
+    }
 
-    if (self.parseModelClass) {
-        SEL isCustomClassSel = NSSelectorFromString(@"__isCustomClass:");;
-        if ([self respondsToSelector:isCustomClassSel]) {
-            IMP imp = [self methodForSelector:isCustomClassSel];
-            BOOL (*func)(id, SEL, id) = (void *)imp;
-            BOOL isCustomClass = func(self, isCustomClassSel,self.parseModelClass);
-            if (!isCustomClass) {
-                if (([self.parseModelClass isSubclassOfClass:NSArray.class] || isParseArray) && ![resultDic isKindOfClass:NSArray.class]) {
-                    NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 指定结果为数组 \n 解析出的数据为非数组:%@",self.fullParseKey,resultDic];
-                    _error = [NSError errorCode:@"-16811" msg:errMsg];
-                    return;
-                }
-                if (!isParseArray) {
-                    if ([self.parseModelClass isSubclassOfClass:NSDictionary.class] && ![resultDic isKindOfClass:NSDictionary.class]) {
-                        NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 指定结果为字典 \n 解析出的数据为非字典:%@",self.fullParseKey,resultDic];
-                        _error = [NSError errorCode:@"-16812" msg:errMsg];
-                        return;
-                    }
-                    
-                    if ([self.parseModelClass isSubclassOfClass:NSNumber.class] && [resultDic isKindOfClass:NSString.class]) {
-                        NSDecimalNumber *num = [NSDecimalNumber decimalNumberWithString:(id)resultDic];
-                        _parseResult = num;
-                        return;
-                    }
-
-                    if ([self.parseModelClass isSubclassOfClass:NSString.class] && [resultDic isKindOfClass:NSNumber.class]) {
-                        _parseResult = [(NSNumber *)resultDic stringValue];
-                        return;
-                    }
-                }
-                _parseResult = resultDic;
-                [TCParseResult printDebugLog:@"传入的parseModelClass不是自定义的model，resultParseObject将赋值为原始数据"];
-                return;
-            }
-        }
-
-        SEL modelSel = nil;
+    if (!self.parseModelClass) {
+        _parseResult = resultDic;
+        return;
+    }
+    
+    //基本类型赋值，isParseArray为YES时，直接赋值为原始值，未对数组中的类型进行校验
+    if ([self.parseModelClass isSubclassOfClass:NSDictionary.class]) {
         if (isParseArray) {
-            modelSel = NSSelectorFromString(@"tc_arrayOfModelsFromKeyValues:error:");
-        } else {
-            modelSel = NSSelectorFromString(@"tc_modelFromKeyValues:error:");
-        }
-        NSError *err = nil;
-        if ([self.parseModelClass respondsToSelector:modelSel]) {
-            IMP imp = [self.parseModelClass methodForSelector:modelSel];
-            NSObject *(*func)(id, SEL, id, NSError**) = (void *)imp;
-            _parseResult = func(self.parseModelClass, modelSel, resultDic, &err);
-        } else {
-            err = [NSError errorCode:@"-16813" msg:@"请添加：pod 'TCJSONModel' 进行model转换"];
-            [TCParseResult printDebugLog:err.localizedDescription];
-        }
-        _error = err;
-    } else {
-        //容错处理，避免外部调用array的方法时崩溃
-        if (isParseArray && ![resultDic isKindOfClass:NSArray.class]) {
-            NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 指定结果为数组 \n 解析出的数据为非数组:%@",self.fullParseKey,resultDic];
-            _error = [NSError errorCode:@"-16814" msg:errMsg];
+            _parseResult = resultDic;
             return;
         }
-        _parseResult = resultDic;
+        if ([resultDic isKindOfClass:NSDictionary.class]) {
+            _parseResult = resultDic;
+        } else {
+            NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 指定结果为字典 \n 解析出的数据为非字典:%@",self.fullParseKey,resultDic];
+            _error = [NSError errorCode:@"-16812" msg:errMsg];
+        }
+        return;
+    }
+    if ([self.parseModelClass isSubclassOfClass:NSNumber.class]) {
+        if (isParseArray) {
+            _parseResult = resultDic;
+            return;
+        }
+        if ([resultDic isKindOfClass:NSString.class]) {
+            NSDecimalNumber *num = [NSDecimalNumber decimalNumberWithString:(id)resultDic];
+            _parseResult = num;
+        } else if ([resultDic isKindOfClass:NSNumber.class]) {
+            _parseResult = resultDic;
+        } else {
+            NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 指定结果为number \n 解析出的数据为非number:%@",self.fullParseKey,resultDic];
+            _error = [NSError errorCode:@"-16813" msg:errMsg];
+        }
+        return;
+    }
+
+    if ([self.parseModelClass isSubclassOfClass:NSString.class]) {
+        if (isParseArray) {
+            _parseResult = resultDic;
+            return;
+        }
+        if ([resultDic isKindOfClass:NSString.class]) {
+            _parseResult = resultDic;
+        } else if ([resultDic isKindOfClass:NSNumber.class]) {
+            _parseResult = [(NSNumber *)resultDic stringValue];
+        } else {
+            _parseResult = [NSString stringWithFormat:@"%@",resultDic];
+            [TCParseResult printDebugLog:@"指定结果为String，解析出的数据为非String，已转换成String"];
+        }
+        return;
+    }
+
+    //通过TCJSONModel中的NSObject+TCModel分类的__isCustomClass方法，判断传入的parseModelClass是否是自定义model
+    SEL isCustomClassSel = NSSelectorFromString(@"__isCustomClass:");;
+    if ([self respondsToSelector:isCustomClassSel]) {
+        IMP imp = [self methodForSelector:isCustomClassSel];
+        BOOL (*func)(id, SEL, id) = (void *)imp;
+        BOOL isCustomClass = func(self, isCustomClassSel,self.parseModelClass);
+        if (!isCustomClass) {
+            _parseResult = resultDic;
+            [TCParseResult printDebugLog:@"传入的parseModelClass不是自定义的model，resultParseObject将赋值为原始数据"];
+            return;
+        }
+    }
+
+    SEL modelSel = nil;
+    if (isParseArray) {
+        modelSel = NSSelectorFromString(@"tc_arrayOfModelsFromKeyValues:error:");
+    } else {
+        modelSel = NSSelectorFromString(@"tc_modelFromKeyValues:error:");
+    }
+    if ([self.parseModelClass respondsToSelector:modelSel]) {
+        IMP imp = [self.parseModelClass methodForSelector:modelSel];
+        NSObject *(*func)(id, SEL, id, NSError**) = (void *)imp;
+        _parseResult = func(self.parseModelClass, modelSel, resultDic, &err);
+        _error = err;
+    } else {
+        _error = [NSError errorCode:@"-16814" msg:@"请添加：pod 'TCJSONModel' 进行model转换"];
+        [TCParseResult printDebugLog:_error.localizedDescription];
     }
 }
 

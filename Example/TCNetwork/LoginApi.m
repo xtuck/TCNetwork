@@ -69,9 +69,9 @@
     //但是调用的时候又设置了.l_loadOnView(self.view)，所以最后loading框会显示在self.view上
     
     return (LoginApi *)self.apiInitURLJoin(self.baseUrl,@"/user/login",nil).l_params(param).l_loadOnView(UIView.appWindow)
-    .l_interceptorBlock(^NSError *(LoginApi *api){
-        //此处举例说明interceptorBlock的用法
-        //res是登录成功返回的信息，但是在业务逻辑上可能需要判断用户角色或身份是否可以在当前客户端登录
+    .l_successResultInterceptorBlock(^NSError *(LoginApi *api){
+        //此处举例说明l_successResultInterceptorBlock的用法
+        //response是登录成功返回的信息，但是在业务逻辑上可能需要判断用户角色或身份是否可以在当前客户端登录
         NSString *userType = api.dataObject[@"type"];
         if (userType.intValue==2) {
             return [NSError errorCode:@"10086" msg:@"老师账号无法在学生端登录"];
