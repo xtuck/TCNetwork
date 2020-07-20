@@ -34,7 +34,7 @@ TCNetwork is available under the MIT license. See the LICENSE file for more info
 ## 用法
 大部分用法都在Api注释中和Demo注释中，demo中的数据我都是测试完毕后修改了，请自行使用真实的服务器配置信息进行调试。
 Https请求调试不通的时候，需要在info.plist中配置    
-```ruby
+```
 <key>NSAppTransportSecurity</key>
 <dict>
     <key>NSAllowsArbitraryLoads</key>
@@ -46,14 +46,47 @@ Https请求调试不通的时候，需要在info.plist中配置
   不需要重写的父类方法可以不写，调用接口请求时，不需要的参数可以不传。
 ###
     检查版本更新
-```ruby
+```
+//基类的主要设置，继承TCBaseApi，与基类相同的配置，可以省略
+
+@implementation MyBaseApi
+
++ (NSString *)baseUrl {
+    return @"http://xxxxxxxxxxxxxxxxx";
+}
+
+- (NSString *)codeKey {
+    return @"code";
+}
+
+- (NSString *)messageKey {
+    return @"msg";
+}
+
+- (NSString *)dataObjectKey {
+    return @"data";
+}
+
+//数组中的元素：number和string都可以
+- (NSArray *)successCodes {
+    return @[@"0"];
+}
+@end
+
+//接口创建，继承MyBaseApi
+//不设置l_httpMethod时，默认的是TCHttp_POST
++ (TCBaseApi *)checkVersion {
+    NSMutableDictionary *params = NSMutableDictionary.maker.addKV(@"p1",@(1)).addKV(@"p2",@"2");
+    return self.apiInitURLJoin(self.baseUrl,@"appversion/ios",nil).l_params(params).l_httpMethod(TCHttp_GET);
+}
+//接口调用
 [CheckVersionApi checkVersion].apiCall(^(CheckVersionApi *api){
 	NSLog(@"版本更新数据为：\n%@",[api.response description]);
 });
 ```
 
 2·通过非继承的方式调用TCBaseApi
-```ruby
+```
 TCBaseApi.apiInitURLFull(@"https://httpbin.org/ip").l_httpMethod(TCHttp_GET).l_parseModelClass_parseKey(nil,@"origin").apiCall(^(TCBaseApi *api) {
     NSString *ipStr = api.resultParseObject;
     NSLog(@"方式1:获取到了ip地址：%@",ipStr);
@@ -64,9 +97,7 @@ TCBaseApi.apiInitURLFull(@"https://httpbin.org/ip").l_httpMethod(TCHttp_GET).api
     NSLog(@"方式2:获取到了ip地址：%@",ipStr);
 });
 
-```
 
-```ruby
 @weakify(self);
 TCBaseApi.apiInitURLJoin(kHostUrl,@"contract/articles/",_model.id,nil).l_httpMethod(TCHttp_GET).l_delegate(self)
 .l_parseKeyMap(@{kDCodeKey:kDCodeKey,kDDataKey:kDDataKey,kDMsgKey:kDMsgKey})
@@ -83,13 +114,13 @@ TCBaseApi.apiInitURLJoin(kHostUrl,@"contract/articles/",_model.id,nil).l_httpMet
 ```
 ## 说明
     常用主要参数调用
-```ruby
+```
 TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi *api){
 	//处理请求结果，通过对返回的api对象的属性error进行判空，来判断是否成功
 });
 ```
 	参数说明
-```ruby
+```
 //MARK:- 初始化
 /// 初始化，传入拼接好的url，使用NSString分类方法 l_joinURL 进行拼接。（推荐）
 +(TCBaseApi * (^)(NSString *))apiInitURLFull;
@@ -98,10 +129,10 @@ TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi
 +(TCBaseApi * (^)(NSString *,...))apiInitURLJoin;
 
 //MARK:- toastView相关设置
-///承载loading的view，同时也是承载错误信息tosat的view
+///承载loading的父视图，同时也是承载错误信息tosat的父视图
 -(TCBaseApi * (^)(UIView *))l_loadOnView;
 
-/// 参数1：承载loading的view， 参数2:发生错误时，显示错误提示信息的toast所在的view
+/// 参数1：承载loading的父视图， 参数2:发生错误时，显示错误提示信息的toast所在的父视图
 /// 注意：当在子线程中调用api请求时，如果需要传递ViewController的self.view时，该self.view需要在主线程中调用，
 ///      拿到对应的view后再传递参数，具体原因，请看ViewController的view属性相关的官方介绍
 -(TCBaseApi * (^)(UIView *, UIView *))l_loadOnView_errOnView;
@@ -186,6 +217,7 @@ TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi
 -(TCBaseApi * (^)(NSArray *))l_ignoreErrToastCodeArray;
 
 /// 配置HTTPManager和headers
+/// TCBaseApi中的HTTPManager是单例，如果不同接口需要对manager进行差异化配置时，注意正确设置manager在不同接口下对应的配置
 -(TCBaseApi * (^)(ConfigHttpManagerBlock))l_configHttpManagerBlock;
 
 /// 请求结束后执行，在通过code判定成功和失败之前调用，用来处理一些通用逻辑
@@ -227,7 +259,8 @@ TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi
 
 
 
-/// 通常情况下需要重写，设置header的统一设置
+/// 通常情况下需要重写
+/// TCBaseApi中的HTTPManager是单例，如果不同接口需要对manager进行差异化配置时，注意正确设置manager在不同接口下对应的配置
 /// 提示：当同时上传多张图片或其他文件时，可能需要设置更长的超时时间
 /// @param manager manager单例
 - (void)configHttpManager:(AFHTTPSessionManager *)manager;
@@ -275,5 +308,5 @@ TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi
 /// 如果对基类的HTTPManager不满意，可以自己在子类中重写，其他地方需要使用，可以通过类方法来调用
 + (AFHTTPSessionManager *)HTTPManager;
 
-
 ```
+TCBaseApi解析的返回数据，默认格式为NSDictionary，如果返回数据为其他格式，请调用.apiCallOriginal()自行解析返回数据

@@ -175,6 +175,7 @@ typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableD
 -(TCBaseApi * (^)(NSArray *))l_ignoreErrToastCodeArray;
 
 /// 配置HTTPManager和headers
+/// TCBaseApi中的HTTPManager是单例，如果不同接口需要对manager进行差异化配置时，注意正确设置manager在不同接口下对应的配置
 -(TCBaseApi * (^)(ConfigHttpManagerBlock))l_configHttpManagerBlock;
 
 /// 请求结束后执行，在通过code判定成功和失败之前调用，用来处理一些通用逻辑
@@ -216,7 +217,8 @@ typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableD
 
 
 
-/// 通常情况下需要重写，设置header的统一设置
+/// 通常情况下需要重写
+/// TCBaseApi中的HTTPManager是单例，如果不同接口需要对manager进行差异化配置时，注意正确设置manager在不同接口下对应的配置
 /// 提示：当同时上传多张图片或其他文件时，可能需要设置更长的超时时间
 /// @param manager manager单例
 - (void)configHttpManager:(AFHTTPSessionManager *)manager;
