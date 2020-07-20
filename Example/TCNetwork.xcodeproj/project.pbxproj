@@ -82,6 +82,14 @@
 		960F7FF92486D32800333B1F /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		960F7FFA2486E97A00333B1F /* CoinLoginApi.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoinLoginApi.h; sourceTree = "<group>"; };
 		960F7FFB2486E97A00333B1F /* CoinLoginApi.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CoinLoginApi.m; sourceTree = "<group>"; };
+		96EE8F4824C5838E00D6174E /* TCMallApi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCMallApi.h; sourceTree = "<group>"; };
+		96EE8F4924C5838E00D6174E /* TCMallApi.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCMallApi.m; sourceTree = "<group>"; };
+		96EE8F4B24C5844D00D6174E /* TCTargetConfigMall.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCTargetConfigMall.m; sourceTree = "<group>"; };
+		96EE8F4C24C5844D00D6174E /* TCTargetConfigMall.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCTargetConfigMall.h; sourceTree = "<group>"; };
+		96EE8F4F24C5849800D6174E /* TCCoinBaseApi.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCCoinBaseApi.m; sourceTree = "<group>"; };
+		96EE8F5024C5849800D6174E /* TCCoinBaseApi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCCoinBaseApi.h; sourceTree = "<group>"; };
+		96EE8F5224C589E800D6174E /* TCTargetConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TCTargetConfig.m; sourceTree = "<group>"; };
+		96EE8F5324C589E900D6174E /* TCTargetConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TCTargetConfig.h; sourceTree = "<group>"; };
 		97FB1311F8C670140EAC10C5 /* TCNetwork.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = TCNetwork.podspec; path = ../TCNetwork.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		B52268F964B31F12B25700D2 /* Pods-TCNetwork_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TCNetwork_Example.debug.xcconfig"; path = "Target Support Files/Pods-TCNetwork_Example/Pods-TCNetwork_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		F849C7224EBC000C256AECD5 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
@@ -176,6 +184,7 @@
 				960F7FF22486243000333B1F /* LoginApi.m */,
 				960F7FFA2486E97A00333B1F /* CoinLoginApi.h */,
 				960F7FFB2486E97A00333B1F /* CoinLoginApi.m */,
+				96EE8F4E24C5845800D6174E /* UseApiExample */,
 				71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */,
 				6003F5A8195388D20070C39A /* Images.xcassets */,
 				6003F594195388D20070C39A /* Supporting Files */,
@@ -222,6 +231,37 @@
 				F849C7224EBC000C256AECD5 /* LICENSE */,
 			);
 			name = "Podspec Metadata";
+			sourceTree = "<group>";
+		};
+		96EE8F4E24C5845800D6174E /* UseApiExample */ = {
+			isa = PBXGroup;
+			children = (
+				96EE8F5524C58A3100D6174E /* BaseApi */,
+				96EE8F5624C58AF300D6174E /* MallModule */,
+			);
+			name = UseApiExample;
+			sourceTree = "<group>";
+		};
+		96EE8F5524C58A3100D6174E /* BaseApi */ = {
+			isa = PBXGroup;
+			children = (
+				96EE8F5024C5849800D6174E /* TCCoinBaseApi.h */,
+				96EE8F4F24C5849800D6174E /* TCCoinBaseApi.m */,
+				96EE8F5324C589E900D6174E /* TCTargetConfig.h */,
+				96EE8F5224C589E800D6174E /* TCTargetConfig.m */,
+			);
+			name = BaseApi;
+			sourceTree = "<group>";
+		};
+		96EE8F5624C58AF300D6174E /* MallModule */ = {
+			isa = PBXGroup;
+			children = (
+				96EE8F4824C5838E00D6174E /* TCMallApi.h */,
+				96EE8F4924C5838E00D6174E /* TCMallApi.m */,
+				96EE8F4C24C5844D00D6174E /* TCTargetConfigMall.h */,
+				96EE8F4B24C5844D00D6174E /* TCTargetConfigMall.m */,
+			);
+			name = MallModule;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

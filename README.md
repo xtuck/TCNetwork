@@ -37,7 +37,7 @@ TCNetwork is available under the MIT license. See the LICENSE file for more info
 
 
 ## 用法
-大部分用法都在Api注释中和Demo注释中，demo中的数据我都是测试完毕后修改了，请自行使用真实的服务器配置信息进行调试。
+大部分用法都在Api注释中和Demo注释中，demo中的数据我都是测试完毕后修改了，请自行使用真实的服务器配置信息进行调试。  
 Https请求调试不通的时候，需要在info.plist中配置    
 ```
 <key>NSAppTransportSecurity</key>
@@ -46,13 +46,13 @@ Https请求调试不通的时候，需要在info.plist中配置
     <true/>
 </dict>
 ```
-1·通过继承TCBaseApi，创建自己的api基类，在自己的api基类中编写通用配置和通用的处理逻辑，需要调用http请求时，创建api接口类，继承自己的api基类。
-  自定义基类参考demo中的“MyBaseApi”类，接口请求类参考demo中的“CheckVersionApi”类。
+1·通过继承TCBaseApi，创建自己的api基类，在自己的api基类中编写通用配置和通用的处理逻辑，需要调用http请求时，创建api接口类，继承自己的api基类。  
+  自定义基类参考demo中的“MyBaseApi”类，接口请求类参考demo中的“CheckVersionApi”类。  
   不需要重写的父类方法可以不写，调用接口请求时，不需要的参数可以不传。
 ###
     检查版本更新
 ```
-//基类的主要设置，继承TCBaseApi，与基类相同的配置，可以省略
+//基类的主要设置，继承TCBaseApi，与TCBaseApi中相同的配置，可以省略
 
 @implementation MyBaseApi
 
@@ -314,4 +314,7 @@ TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi
 + (AFHTTPSessionManager *)HTTPManager;
 
 ```
-TCBaseApi解析的返回数据，默认格式为NSDictionary，如果返回数据为其他格式，请调用.apiCallOriginal()自行解析返回数据
+注意：  
+TCBaseApi中的HTTPManager是单例，如果不重写HTTPManager方法，在不同接口需要对manager进行差异化配置时，注意正确设置manager在不同接口下对应的配置  
+TCBaseApi解析的返回数据，默认格式为NSDictionary，如果返回数据为其他格式，请调用.apiCallOriginal()自行解析返回数据  
+可参考“UseApiExample”目录下的方案使用TCBaseApi  
