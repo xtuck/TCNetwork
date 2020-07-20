@@ -22,6 +22,11 @@ it, simply add the following line to your Podfile:
 pod 'TCNetwork'
 ```
 
+字典转model需要额外添加：
+```ruby
+pod 'TCJSONModel'
+```
+
 ## Author
 
 xtuck, 104166631@qq.com
