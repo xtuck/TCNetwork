@@ -10,6 +10,8 @@
 To run the example project, clone the repo, and run `pod install` from the Example directory first.
 
 ## Requirements
+ios9.0及以上
+
 
 ## Installation
 
@@ -32,9 +34,14 @@ TCNetwork is available under the MIT license. See the LICENSE file for more info
 ## 用法
 大部分用法都在Api注释中和Demo注释中
 demo中的数据我都是测试完毕后，才将敏感信息改了，请自行使用真实的服务器配置信息进行调试
-Https请求调不通的时候，需要在info.plist中配置    
+Https请求调试不通的时候，需要在info.plist中配置    
+```ruby
 <key>NSAppTransportSecurity</key>
 <dict>
     <key>NSAllowsArbitraryLoads</key>
     <true/>
 </dict>
+```
+
+
+

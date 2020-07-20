@@ -158,7 +158,7 @@ typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableD
 -(TCBaseApi * (^)(FinishBlock))apiCallSuccess;
 
 
-//MARK:- Extensions  以下五个方法，是为了支持以非继承的方式来使用TCBaseApi
+//MARK:- Extensions  以下方法，是为了支持以非继承的方式来使用TCBaseApi
 
 /// 用来解析code，msg，time，dataObject，otherObject
 /// 优先级高于codeKey，msgKey，timeKey，dataObjectKey，otherObjectKey方法
@@ -179,6 +179,12 @@ typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableD
 
 /// 请求结束后执行，在通过code判定成功和失败之前调用，用来处理一些通用逻辑
 -(TCBaseApi * (^)(InterceptorBlock))l_requestFinishBlock;
+
+/// 如果TCBaseApi中默认的HTTPManager不能满足需求，可以自定义httpManager，优先级高于[TCBaseApi HTTPManager]
+-(TCBaseApi * (^)(AFHTTPSessionManager *))l_customHttpManager;
+
+
+//MARK:-
 
 
 //MARK:- 请求完毕后可调用的实例方法

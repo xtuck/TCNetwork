@@ -28,11 +28,9 @@ static const char * kTCCancelHttpTaskKey;
 @property (nonatomic,strong) NSObject *params;//执行http请求时传的参数
 
 @property (nonatomic,strong) NSArray *successCodeArray;//作用：用来判断返回结果是否是成功的结果，优先级高于successCodes方法
-@property (nonatomic,strong) NSArray *ignoreErrToastCodeArray;//
-@property (nonatomic,strong) NSDictionary *parseKeyMap;//
-
--(TCBaseApi * (^)(NSArray *))l_ignoreErrToastCodeArray;
--(TCBaseApi * (^)(NSDictionary *))l_parseKeyMap;
+@property (nonatomic,strong) NSArray *ignoreErrToastCodeArray;
+@property (nonatomic,strong) NSDictionary *parseKeyMap;
+@property (nonatomic,strong) AFHTTPSessionManager *customHttpManager;
 
 @property (nonatomic,weak) UIView *loadOnView; //显示loading提示的容器
 @property (nonatomic,weak) UIView *errOnView;//显示错误信息的toast容器
@@ -162,6 +160,13 @@ static const char * kTCCancelHttpTaskKey;
 -(TCBaseApi * (^)(InterceptorBlock))l_requestFinishBlock {
     return ^(InterceptorBlock l_requestFinishBlock){
         self.requestFinishBlock = l_requestFinishBlock;
+        return self;
+    };
+}
+
+-(TCBaseApi * (^)(AFHTTPSessionManager *))l_customHttpManager {
+    return ^(AFHTTPSessionManager *l_customHttpManager){
+        self.customHttpManager = l_customHttpManager;
         return self;
     };
 }
@@ -672,73 +677,74 @@ static const char * kTCCancelHttpTaskKey;
                 
         self->_isRequesting = YES;
         
-        [self configHttpManager:[self.class HTTPManager]];
+        AFHTTPSessionManager *currentHttpManager = self.customHttpManager ? : [self.class HTTPManager];
+        [self configHttpManager:currentHttpManager];
         
         NSMutableDictionary *headers = [NSMutableDictionary dictionary];
         [self configRequestHeaders:headers];
         
         if (self.configHttpManagerBlock) {
-            self.configHttpManagerBlock([self.class HTTPManager],headers);
+            self.configHttpManagerBlock(currentHttpManager,headers);
         }
         
         NSURLSessionDataTask *sTask = nil;
         if (self.multipartBlock) {
             //只有post支持上传文件
-            sTask = [[self.class HTTPManager] POST:self.URLFull
-                                        parameters:postParams
-                                           headers:headers
-                         constructingBodyWithBlock:self.multipartBlock
-                                          progress:self.progressBlock
-                                           success:success
-                                           failure:failure];
+            sTask = [currentHttpManager POST:self.URLFull
+                                  parameters:postParams
+                                     headers:headers
+                   constructingBodyWithBlock:self.multipartBlock
+                                    progress:self.progressBlock
+                                     success:success
+                                     failure:failure];
         } else {
             switch (self.httpMethod) {
                 case TCHttp_POST:
-                    sTask = [[self.class HTTPManager] POST:self.URLFull
-                                                parameters:postParams
-                                                   headers:headers
-                                                  progress:self.progressBlock
-                                                   success:success
-                                                   failure:failure];
+                    sTask = [currentHttpManager POST:self.URLFull
+                                          parameters:postParams
+                                             headers:headers
+                                            progress:self.progressBlock
+                                             success:success
+                                             failure:failure];
                     break;
                 case TCHttp_GET:
-                    sTask = [[self.class HTTPManager] GET:self.URLFull
-                                               parameters:postParams
-                                                  headers:headers
-                                                 progress:self.progressBlock
-                                                  success:success
-                                                  failure:failure];
+                    sTask = [currentHttpManager GET:self.URLFull
+                                         parameters:postParams
+                                            headers:headers
+                                           progress:self.progressBlock
+                                            success:success
+                                            failure:failure];
                     break;
                 case TCHttp_PUT:
-                    sTask = [[self.class HTTPManager] PUT:self.URLFull
-                                               parameters:postParams
-                                                  headers:headers
-                                                  success:success
-                                                  failure:failure];
+                    sTask = [currentHttpManager PUT:self.URLFull
+                                         parameters:postParams
+                                            headers:headers
+                                            success:success
+                                            failure:failure];
                     break;
                 case TCHttp_DELETE:
-                    sTask = [[self.class HTTPManager] DELETE:self.URLFull
-                                                  parameters:postParams
-                                                     headers:headers
-                                                     success:success
-                                                     failure:failure];
+                    sTask = [currentHttpManager DELETE:self.URLFull
+                                            parameters:postParams
+                                               headers:headers
+                                               success:success
+                                               failure:failure];
                     break;
                 case TCHttp_PATCH:
-                    sTask = [[self.class HTTPManager] PATCH:self.URLFull
-                                                 parameters:postParams
-                                                    headers:headers
-                                                    success:success
-                                                    failure:failure];
+                    sTask = [currentHttpManager PATCH:self.URLFull
+                                           parameters:postParams
+                                              headers:headers
+                                              success:success
+                                              failure:failure];
                     break;
                 case TCHttp_HEAD: {
                     void (^hpSuccess)(NSURLSessionDataTask *) = ^(NSURLSessionDataTask *task) {
                         success(task,@"success");
                     };
-                    sTask = [[self.class HTTPManager] HEAD:self.URLFull
-                                                parameters:postParams
-                                                   headers:headers
-                                                   success:hpSuccess
-                                                   failure:failure];
+                    sTask = [currentHttpManager HEAD:self.URLFull
+                                          parameters:postParams
+                                             headers:headers
+                                             success:hpSuccess
+                                             failure:failure];
                 }
                     break;
                 default:
