@@ -408,9 +408,11 @@ static const char * kTCCancelHttpTaskKey;
     //model解析
     [self parseResult];
     
-    NSError *err = [self requestFinish:self.weakApi];
-    if (!err && self.requestFinishBlock) {
+    NSError *err = nil;
+    if (self.requestFinishBlock) {
         err = self.requestFinishBlock(self.weakApi);
+    } else {
+        err = [self requestFinish:self.weakApi];
     }
     if (err) {
         [self handleError:err];
@@ -656,9 +658,12 @@ static const char * kTCCancelHttpTaskKey;
         };
         void (^failure)(NSURLSessionDataTask *, NSError *) = ^(NSURLSessionDataTask *task, NSError *error) {
             removeCancelTask(task);
-            NSError *err = [self requestFinish:self.weakApi];
-            if (!err && self.requestFinishBlock) {
+            self->_error = error;
+            NSError *err = nil;
+            if (self.requestFinishBlock) {
                 err = self.requestFinishBlock(self.weakApi);
+            } else {
+                err = [self requestFinish:self.weakApi];
             }
             if (err) {
                 [self handleError:err];
@@ -678,13 +683,12 @@ static const char * kTCCancelHttpTaskKey;
         self->_isRequesting = YES;
         
         AFHTTPSessionManager *currentHttpManager = self.customHttpManager ? : [self.class HTTPManager];
-        [self configHttpManager:currentHttpManager];
-        
         NSMutableDictionary *headers = [NSMutableDictionary dictionary];
-        [self configRequestHeaders:headers];
-        
         if (self.configHttpManagerBlock) {
             self.configHttpManagerBlock(currentHttpManager,headers);
+        } else {
+            [self configHttpManager:currentHttpManager];
+            [self configRequestHeaders:headers];
         }
         
         NSURLSessionDataTask *sTask = nil;
