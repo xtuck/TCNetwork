@@ -838,14 +838,14 @@ static const char * kTCCancelHttpTaskKey;
 #pragma mark -----子类可重写，进行自定义设置
 
 #pragma mark --是否使用自定义toast
-- (BOOL)showCustomTost:(UIView *)onView text:(NSString *)text {
+- (BOOL)showCustomTost:(UIView *)errOnView text:(NSString *)errMsg {
     return NO;
 }
 //自定义数据加载中的提示框样式
-- (BOOL)showCustomTostLoading:(UIView *)onView {
+- (BOOL)showCustomTostLoading:(UIView *)loadOnView {
     return NO;
 }
-- (BOOL)hideCustomTost:(UIView *)onView {
+- (BOOL)hideCustomTost:(UIView *)loadOnView {
     return NO;
 }
 

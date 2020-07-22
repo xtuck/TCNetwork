@@ -249,11 +249,11 @@ TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi
 //MARK:- 子类可重写
 
 /// 不重写的话，使用默认样式
-- (BOOL)showCustomTost:(UIView *)onView text:(NSString *)text;
+- (BOOL)showCustomTost:(UIView *)errOnView text:(NSString *)errMsg;
 /// 自定义数据加载中的提示框样式
-- (BOOL)showCustomTostLoading:(UIView *)onView;
+- (BOOL)showCustomTostLoading:(UIView *)loadOnView;
 /// 隐藏Loading提示框
-- (BOOL)hideCustomTost:(UIView *)onView;
+- (BOOL)hideCustomTost:(UIView *)loadOnView;
 
 
 /// 默认情况只在debug模式下打印日志，可在子类中重写此方法，来控制日志的打印

@@ -53,14 +53,14 @@
 
 //以下三个方法：如果自定义toast，请return YES
 
-- (BOOL)showCustomTost:(UIView *)onView text:(NSString *)text {
+- (BOOL)showCustomTost:(UIView *)errOnView text:(NSString *)errMsg {
     return NO;
 }
 
-- (BOOL)showCustomTostLoading:(UIView *)onView {
+- (BOOL)showCustomTostLoading:(UIView *)loadOnView {
     return NO;
 }
-- (BOOL)hideCustomTost:(UIView *)onView {
+- (BOOL)hideCustomTost:(UIView *)loadOnView {
     return NO;
 }
 
