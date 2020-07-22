@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'TCNetwork'
-  s.version          = '0.1.4'
+  s.version          = '0.1.5'
   s.summary          = '链式编程封装AFNetworking,使得HTTP请求变得更加简洁易用.'
 
 # This description is used to generate tags and improve search results.
