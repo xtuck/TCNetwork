@@ -316,5 +316,7 @@ TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi
 ```
 注意：  
 TCBaseApi中的HTTPManager是单例，如果不重写HTTPManager方法，在不同接口需要对manager进行差异化配置时，注意正确设置manager在不同接口下对应的配置  
+SessionManager单例优势：复用TCP链接，加快请求效率  
+若是未设置SessionManager的completionQueue，请求的返回数据会默认被切换到主线程返回，即：无论是主线程调用请求还是子线程调用请求，请求结果都会在主线程返回  
 TCBaseApi解析的返回数据，默认格式为NSDictionary，如果返回数据为其他格式，请调用.apiCallOriginal()自行解析返回数据  
 可参考“UseApiExample”目录下的方案使用TCBaseApi  
