@@ -32,9 +32,11 @@ static NSString * const kLoginExpiredCode = @"201";
 
 - (void)configHttpManager:(AFHTTPSessionManager *)manager {
     [super configHttpManager:manager];
-    manager.requestSerializer.timeoutInterval = 15;
-    //发送请求的格式为json text格式
-    manager.requestSerializer = [AFJSONRequestSerializer serializer];
+    if (![manager.requestSerializer.class isMemberOfClass:AFJSONRequestSerializer.class]) {
+        //发送请求的格式为json text格式
+        manager.requestSerializer = [AFJSONRequestSerializer serializer];
+        manager.requestSerializer.timeoutInterval = 15;
+    }
 }
 
 - (void)configRequestHeaders:(NSMutableDictionary *)headers {
