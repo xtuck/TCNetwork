@@ -574,12 +574,14 @@ static const char * kTCCancelHttpTaskKey;
 - (NSString *)checkCancelRequestWithParams:(NSDictionary *)params cancel:(NSURLSessionDataTask **)cancelTask {
     NSString *keyStr = [self cancelTaskKey:params];
     if (keyStr.length) {
-        NSURLSessionDataTask *task = [self.storeTaskDictionary objectForKey:keyStr];
-        if (task) {
-            [self.storeTaskDictionary removeObjectForKey:keyStr];
-            if (task.state != NSURLSessionTaskStateCompleted) {
-                if (cancelTask) {
-                    *cancelTask = task;
+        @synchronized (TCBaseApi.class) {
+            NSURLSessionDataTask *task = [self.storeTaskDictionary objectForKey:keyStr];
+            if (task) {
+                [self.storeTaskDictionary removeObjectForKey:keyStr];
+                if (task.state != NSURLSessionTaskStateCompleted) {
+                    if (cancelTask) {
+                        *cancelTask = task;
+                    }
                 }
             }
         }
@@ -595,22 +597,23 @@ static const char * kTCCancelHttpTaskKey;
         if (!limitDic) {
             limitDic = [NSMutableDictionary dictionary];
         }
-        NSTimeInterval currentTime = CACurrentMediaTime();
-        NSString *keyStr = [NSString stringWithFormat:@"%@:%@",self.URLFull,params];
-        //NSString *keyStr = paramStr.md5HexLower;
-        NSNumber *lastTime = limitDic[keyStr];
-        if (lastTime && currentTime - lastTime.doubleValue < self.limitRequestInterval) {
-            //限制
-            if (self.printLog) {
-                NSLog(@"%@秒内的重复请求已被忽略：%@",@(self.limitRequestInterval),keyStr);
+        @synchronized (limitDic) {
+            NSTimeInterval currentTime = CACurrentMediaTime();
+            NSString *keyStr = [NSString stringWithFormat:@"%@:%@",self.URLFull,params];
+            NSNumber *lastTime = limitDic[keyStr];
+            if (lastTime && currentTime - lastTime.doubleValue < self.limitRequestInterval) {
+                //限制
+                if (self.printLog) {
+                    NSLog(@"%@秒内的重复请求已被忽略：%@",@(self.limitRequestInterval),keyStr);
+                }
+                return [NSError errorCode:(id)@(APIErrorCode_HttpCancel) msg:@"请求过于频繁，已取消"];
+            } else {
+                //不限制
+                if (limitDic.count>100) {
+                    [limitDic removeAllObjects];
+                }
+                [limitDic setValue:@(currentTime) forKey:keyStr];
             }
-            return [NSError errorCode:(id)@(APIErrorCode_HttpCancel) msg:@"请求过于频繁，已取消"];
-        } else {
-            //不限制
-            if (limitDic.count>100) {
-                [limitDic removeAllObjects];
-            }
-            [limitDic setValue:@(currentTime) forKey:keyStr];
         }
     }
     return nil;
@@ -644,9 +647,11 @@ static const char * kTCCancelHttpTaskKey;
     dispatch_block_t requestBlock = ^{
         void (^removeCancelTask)(NSURLSessionDataTask *) = ^(NSURLSessionDataTask *task) {
             if (cancelKey.length) {
-                NSURLSessionDataTask *lastTask = [self.storeTaskDictionary objectForKey:cancelKey];
-                if (lastTask == task) {
-                    [self.storeTaskDictionary removeObjectForKey:cancelKey];
+                @synchronized (TCBaseApi.class) {
+                    NSURLSessionDataTask *lastTask = [self.storeTaskDictionary objectForKey:cancelKey];
+                    if (lastTask == task) {
+                        [self.storeTaskDictionary removeObjectForKey:cancelKey];
+                    }
                 }
             }
         };
@@ -760,10 +765,12 @@ static const char * kTCCancelHttpTaskKey;
         
         self->_httpTask = sTask;
         if (sTask && cancelKey.length) {
-            if (self.storeTaskDictionary.count>20) {
-                [self.storeTaskDictionary removeAllObjects];
+            @synchronized (TCBaseApi.class) {
+                if (self.storeTaskDictionary.count>20) {
+                    [self.storeTaskDictionary removeAllObjects];
+                }
+                [self.storeTaskDictionary setObject:sTask forKey:cancelKey];
             }
-            [self.storeTaskDictionary setObject:sTask forKey:cancelKey];
         }
         
         [self autoCancelTask];
