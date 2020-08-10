@@ -155,7 +155,7 @@
         return;
     }
 
-    //通过TCJSONModel中的NSObject+TCModel分类的__isCustomClass方法，判断传入的parseModelClass是否是自定义model
+    //通过TCJSONModel中的NSObject+TCJSONModel分类的__isCustomClass方法，判断传入的parseModelClass是否是自定义model
     SEL isCustomClassSel = NSSelectorFromString(@"__isCustomClass:");;
     if ([self respondsToSelector:isCustomClassSel]) {
         IMP imp = [self methodForSelector:isCustomClassSel];

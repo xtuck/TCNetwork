@@ -574,7 +574,7 @@ static const char * kTCCancelHttpTaskKey;
 - (NSString *)checkCancelRequestWithParams:(NSDictionary *)params cancel:(NSURLSessionDataTask **)cancelTask {
     NSString *keyStr = [self cancelTaskKey:params];
     if (keyStr.length) {
-        @synchronized (TCBaseApi.class) {
+        @synchronized (self.storeTaskDictionary) {
             NSURLSessionDataTask *task = [self.storeTaskDictionary objectForKey:keyStr];
             if (task) {
                 [self.storeTaskDictionary removeObjectForKey:keyStr];
@@ -647,7 +647,7 @@ static const char * kTCCancelHttpTaskKey;
     dispatch_block_t requestBlock = ^{
         void (^removeCancelTask)(NSURLSessionDataTask *) = ^(NSURLSessionDataTask *task) {
             if (cancelKey.length) {
-                @synchronized (TCBaseApi.class) {
+                @synchronized (self.storeTaskDictionary) {
                     NSURLSessionDataTask *lastTask = [self.storeTaskDictionary objectForKey:cancelKey];
                     if (lastTask == task) {
                         [self.storeTaskDictionary removeObjectForKey:cancelKey];
@@ -765,7 +765,7 @@ static const char * kTCCancelHttpTaskKey;
         
         self->_httpTask = sTask;
         if (sTask && cancelKey.length) {
-            @synchronized (TCBaseApi.class) {
+            @synchronized (self.storeTaskDictionary) {
                 if (self.storeTaskDictionary.count>20) {
                     [self.storeTaskDictionary removeAllObjects];
                 }
