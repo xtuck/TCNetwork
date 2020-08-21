@@ -227,7 +227,7 @@ typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableD
 /// params类型与设置参数时传入的类型是一致的
 /// 通过mutableCopy传入子类的为可变类型对象:NSMutableDictionary，NSMutableString，NSMutableData
 /// 所以不可以改变params对象的内存地址，即不要新建对象
-/// @param params 发起请求时的参数，即对应的http的body数据
+/// @param params 发起请求时的参数
 - (void)configRequestParams:(NSObject *)params;
 
 /// 自AFNetworking 4.0后，请求参数中可以传入headers了，
