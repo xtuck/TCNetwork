@@ -687,14 +687,15 @@ static const char * kTCCancelHttpTaskKey;
                 
         self->_isRequesting = YES;
         
-        //MARK:HttpManager是静态变量，对其设置时，可能需要加锁，确保线程安全
         AFHTTPSessionManager *currentHttpManager = self.customHttpManager ? : [self.class HTTPManager];
         NSMutableDictionary *headers = [NSMutableDictionary dictionary];
-        if (self.configHttpManagerBlock) {
-            self.configHttpManagerBlock(currentHttpManager,headers);
-        } else {
-            [self configHttpManager:currentHttpManager];
-            [self configRequestHeaders:headers];
+        @synchronized (currentHttpManager) {
+            if (self.configHttpManagerBlock) {
+                self.configHttpManagerBlock(currentHttpManager,headers);
+            } else {
+                [self configHttpManager:currentHttpManager];
+                [self configRequestHeaders:headers];
+            }
         }
         
         NSURLSessionDataTask *sTask = nil;

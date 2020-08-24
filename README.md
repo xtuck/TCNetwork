@@ -50,7 +50,7 @@ Https请求调试不通的时候，需要在info.plist中配置
   自定义基类参考demo中的“MyBaseApi”类，接口请求类参考demo中的“CheckVersionApi”类。  
   不需要重写的父类方法可以不写，调用接口请求时，不需要的参数可以不传。
 ###
-    检查版本更新
+
 ```
 //基类的主要设置，继承TCBaseApi，与TCBaseApi中相同的配置，可以省略
 
