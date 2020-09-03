@@ -21,6 +21,10 @@
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor lightGrayColor];
     [self.view toastWithText:@"即将自动登录" hideAfterDelay:2];
+        
+        NSString *pre = @"";
+        pre.l_joinURL(@"111");
+        
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         //block里面使用weakSelf，避免对象延迟释放
