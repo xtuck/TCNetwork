@@ -486,7 +486,7 @@ static const char * kTCCancelHttpTaskKey;
             }
             [self mainThreadExe:^{
                 if (![self showCustomTost:self.errOnView text:errMsg]) {
-                    [self.errOnView toastWithText:errMsg](self.toastStyle);
+                    [self.errOnView toastWithText:errMsg style:self.toastStyle];
                 }
             }];
         }
@@ -786,7 +786,7 @@ static const char * kTCCancelHttpTaskKey;
         if (self.loadOnView) {
             [self mainThreadExe:^{
                 if (![self showCustomTostLoading:self.loadOnView]) {
-                    [self.loadOnView toastLoading](self.toastStyle);
+                    [self.loadOnView toastLoadingWithStyle:self.toastStyle];
                 }
             }];
         }

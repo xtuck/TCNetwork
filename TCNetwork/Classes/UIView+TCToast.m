@@ -43,11 +43,19 @@
 }
 
 
-- (void(^)(TCToastStyle))toastWithText:(NSString *)text {
-    return [self toastWithText:text hideAfterDelay:kToastDuration];
+- (void)toastWithText:(NSString *)text {
+    [self toastWithText:text style:TCToastStyleSystem];
 }
 
-- (void(^)(TCToastStyle))toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay {
+- (void)toastWithText:(NSString *)text style:(TCToastStyle)style {
+    [self toastWithText:text hideAfterDelay:kToastDuration style:style];
+}
+
+- (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay {
+    [self toastWithText:text hideAfterDelay:delay style:TCToastStyleSystem];
+}
+
+- (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay style:(TCToastStyle)style {
     MBProgressHUD *hud = nil;
     if (![self isEmptyStr:text]) {
         hud = [MBProgressHUD showHUDAddedTo:self animated:YES];
@@ -58,16 +66,22 @@
         [hud hideAnimated:YES afterDelay:delay];
         hud.isHudDelayHide = YES;
     }
-    return ^(TCToastStyle style){
-        [self configHud:hud style:style];
-    };
+    [self configHud:hud style:style];
 }
 
-- (void(^)(TCToastStyle))toastLoading {
-    return [self toastLoadingWithText:nil];
+- (void)toastLoading {
+    [self toastLoadingWithStyle:TCToastStyleSystem];
 }
 
-- (void(^)(TCToastStyle))toastLoadingWithText:(NSString *)text {
+- (void)toastLoadingWithStyle:(TCToastStyle)style {
+    [self toastLoadingWithText:nil style:style];
+}
+
+- (void)toastLoadingWithText:(NSString *)text {
+    [self toastLoadingWithText:text style:TCToastStyleSystem];
+}
+
+- (void)toastLoadingWithText:(NSString *)text style:(TCToastStyle)style {
     MBProgressHUD *hud = nil;
     if (!self.isToastLoading) {
         self.isToastLoading = YES;
@@ -78,9 +92,7 @@
             hud.label.text = text;
         }
     }
-    return ^(TCToastStyle style){
-        [self configHud:hud style:style];
-    };
+    [self configHud:hud style:style];
 }
 
 - (void)configHud:(MBProgressHUD *)hud style:(TCToastStyle)style {

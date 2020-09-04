@@ -31,16 +31,18 @@ typedef NS_ENUM(NSUInteger, TCToastStyle) {
 
 @interface UIView (TCToast)
 
+- (void)toastWithText:(NSString *)text;
+- (void)toastWithText:(NSString *)text style:(TCToastStyle)style;
 
-- (void(^)(TCToastStyle))toastWithText:(NSString *)text;
+- (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay;
+- (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay style:(TCToastStyle)style;
 
-- (void(^)(TCToastStyle))toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay;
 
+- (void)toastLoading;
+- (void)toastLoadingWithStyle:(TCToastStyle)style;
 
-- (void(^)(TCToastStyle))toastLoading;
-
-- (void(^)(TCToastStyle))toastLoadingWithText:(NSString *)text;
-
+- (void)toastLoadingWithText:(NSString *)text;
+- (void)toastLoadingWithText:(NSString *)text style:(TCToastStyle)style;
 
 - (void)toastHide;
 
