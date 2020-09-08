@@ -349,7 +349,8 @@ static const char * kTCCancelHttpTaskKey;
     [self stopLoading];
     _response = response;
     if (self.printLog) {
-        NSLog(@"http responseObject:  %@", response);
+        NSLog(@"Request end:\n Request header: %@\n method: %@\n path: %@\n params: %@\n responseObject: %@",
+              self.httpTask.originalRequest.allHTTPHeaderFields, self.httpTask.originalRequest.HTTPMethod, self.URLFull, self.params ,response);
     }
     
     if (self.originalFinishBlock) {
@@ -778,7 +779,7 @@ static const char * kTCCancelHttpTaskKey;
         [self autoCancelTask];
         
         if (self.printLog) {
-            NSLog(@"Request header: %@\n method: %@\n path: %@\n params: %@",
+            NSLog(@"Request begin:\n Request header: %@\n method: %@\n path: %@\n params: %@",
                   self.httpTask.originalRequest.allHTTPHeaderFields, self.httpTask.originalRequest.HTTPMethod, self.URLFull, postParams);
         }
         

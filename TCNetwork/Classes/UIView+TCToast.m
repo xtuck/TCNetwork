@@ -16,6 +16,11 @@
 
 @implementation UIView (TCToast)
 
+static TCToastStyle dfStyle;
++ (void)setupDefaultStyle:(TCToastStyle)style {
+    dfStyle = style;
+}
+
 - (BOOL)isEmptyStr:(NSString *)str {
     if (nil == str || ![str isKindOfClass:[NSString class]]) {
         return YES;
@@ -44,7 +49,7 @@
 
 
 - (void)toastWithText:(NSString *)text {
-    [self toastWithText:text style:TCToastStyleSystem];
+    [self toastWithText:text style:dfStyle];
 }
 
 - (void)toastWithText:(NSString *)text style:(TCToastStyle)style {
@@ -52,7 +57,7 @@
 }
 
 - (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay {
-    [self toastWithText:text hideAfterDelay:delay style:TCToastStyleSystem];
+    [self toastWithText:text hideAfterDelay:delay style:dfStyle];
 }
 
 - (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay style:(TCToastStyle)style {
@@ -70,7 +75,7 @@
 }
 
 - (void)toastLoading {
-    [self toastLoadingWithStyle:TCToastStyleSystem];
+    [self toastLoadingWithStyle:dfStyle];
 }
 
 - (void)toastLoadingWithStyle:(TCToastStyle)style {
@@ -78,7 +83,7 @@
 }
 
 - (void)toastLoadingWithText:(NSString *)text {
-    [self toastLoadingWithText:text style:TCToastStyleSystem];
+    [self toastLoadingWithText:text style:dfStyle];
 }
 
 - (void)toastLoadingWithText:(NSString *)text style:(TCToastStyle)style {
