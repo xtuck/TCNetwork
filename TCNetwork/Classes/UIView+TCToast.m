@@ -21,6 +21,10 @@ static TCToastStyle dfStyle;
     dfStyle = style;
 }
 
++ (TCToastStyle)getDefaultStyle {
+    return dfStyle;
+}
+
 - (BOOL)isEmptyStr:(NSString *)str {
     if (nil == str || ![str isKindOfClass:[NSString class]]) {
         return YES;

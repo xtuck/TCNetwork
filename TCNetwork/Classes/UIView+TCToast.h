@@ -47,6 +47,7 @@ typedef NS_ENUM(NSUInteger, TCToastStyle) {
 - (void)toastHide;
 
 + (void)setupDefaultStyle:(TCToastStyle)style;
++ (TCToastStyle)getDefaultStyle;
 
 + (UIView *)appWindow;
 

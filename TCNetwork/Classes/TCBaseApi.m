@@ -57,6 +57,7 @@ static const char * kTCCancelHttpTaskKey;
         api.httpMethod = TCHttp_POST;
         __weak typeof(api) weakApi = api;
         api.weakApi = weakApi;
+        api.toastStyle = UIView.getDefaultStyle;
         return api;
     };
 }
