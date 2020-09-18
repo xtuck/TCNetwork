@@ -45,6 +45,8 @@ static const char * kTCCancelHttpTaskKey;
 
 @property (nonatomic,strong) NSMutableArray *parseResultArray;//存储解析结果的数组，resultParseObject为数组中的第一个对象的属性值
 
+@property (nonatomic,weak) id<AspectToken> aspectToken;//用来取消钩子
+
 @end
 
 @implementation TCBaseApi
@@ -817,11 +819,17 @@ static const char * kTCCancelHttpTaskKey;
     }
 }
 
+- (void)dealloc {
+    [self.aspectToken remove];
+}
+
 - (void)autoCancelTask {
     //调用http请求的发起者对象销毁后，取消未完成的http请求
     if ([self.delegate isKindOfClass:[NSObject class]]) {
         __weak typeof(self) weakSelf = self;
-        [self.delegate aspect_hookSelector:NSSelectorFromString(@"dealloc") withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> aspectInfo) {
+        self.aspectToken = [self.delegate aspect_hookSelector:NSSelectorFromString(@"dealloc")
+                                                  withOptions:AspectPositionBefore
+                                                   usingBlock:^(id<AspectInfo> aspectInfo) {
             if (weakSelf.httpTask && weakSelf.httpTask.state != NSURLSessionTaskStateCompleted) {
                 [weakSelf.httpTask cancel];
                 if (weakSelf.printLog) {
