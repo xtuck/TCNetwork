@@ -17,7 +17,7 @@ static NSString * const kLoginExpiredCode = @"201";
     return @"code";
 }
 
-- (NSString *)messageKey {
+- (NSString *)msgKey {
     return @"msg";
 }
 
