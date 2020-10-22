@@ -22,7 +22,7 @@
     return @"code";
 }
 
-- (NSString *)messageKey {
+- (NSString *)msgKey {
     return @"msg";
 }
 
