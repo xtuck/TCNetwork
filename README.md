@@ -64,7 +64,7 @@ Https请求调试不通的时候，需要在info.plist中配置
     return @"code";
 }
 
-- (NSString *)messageKey {
+- (NSString *)msgKey {
     return @"msg";
 }
 
@@ -182,10 +182,11 @@ TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi
 //MARK:- 解析返回数据的相关参数设置
 /// 参数1:解析结果中的model对应的class，如果设置为nil，结果将返回response字典中的对应的原始值
 /// 参数2:解析时取值的key，如果设置为nil，取的是dataObjectKey对应的key值（例：data）
+///      特殊情况：apiCallOriginal调用请求时，如果key设置为nil，则解析时取的值是response的值
 ///      通过"."语法进行指定路径(例："data.shop.product")，通过末尾拼接"()"，来指定最终结果是数组
 ///      如果开头是“#”,则表示起始路径为dataObjectKey(例："#.list" = "data.list"，兼容:"#list" = "#.list")
-///      如果开头是“～”,则表示起始路径为response的根路径，默认的起始路径即为根路径
-///      支持多维数组取值：例：“list[0](1,8)[3](3,4)”, [x]表示数组下标取值，(x,y)表示NSRange取值，兼容:y=0时，表示获取数组的所有值
+///      如果开头是“～”或者“.”,则表示起始路径为response的根路径，默认的起始路径即为根路径
+///      支持多维数组取值：例：“list[0](1,8)[3](3,4)”, [x]表示数组下标取值，(x,y)表示NSRange取值，兼容:y=0时，表示获取数组x之后的所有值
 ///      如果key最末尾是通过(x,y)来取值，或者最末尾是"()"，则表示解析的最终结果为数组
 -(TCBaseApi * (^)(Class,NSString *))l_parseModelClass_parseKey;
 -(TCBaseApi * (^)(Class))l_parseModelClass;
@@ -304,6 +305,9 @@ TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi
 /// 在TCBaseApi的子类中扩展属性，当对response进行解析时，会对扩展的属性进行赋值。
 /// 设置的class必须是当前self本身的class或其父类，且是TCBaseApi的子类，建议使用自己创建的继承于TCBaseApi的基类。不要扩展TCBaseApi已有的属性。
 - (Class)propertyExtensionClass;
+
+/// 将http请求返回的原始数据进行变形处理，然后再进行解析
+- (id)deformResponse:(id)oResponse;
 
 /// 请求刚完毕时的结果检查，统一处理特殊业务，会在通过code判定成功和失败之前执行，子类复写
 /// @param api 当前请求的api接口对象,需要用的数据都在该api的属性中
