@@ -243,6 +243,7 @@ static const char * kTCCancelHttpTaskKey;
 - (void)propertyReset {
     _httpTask = nil;
     _isRequesting = NO;
+    _originalResponse = nil;
     _response = nil;
     _dataObject = nil;
     _otherObject = nil;
@@ -322,10 +323,11 @@ static const char * kTCCancelHttpTaskKey;
 }
 
 //model解析
-- (void)parseResult {
+- (void)parseResult:(BOOL)isApiCallOriginal {
     for (int i=0; i<_parseResultArray.count; i++) {
         TCParseResult *model = _parseResultArray[i];
-        model.fullParseKey = [TCParseResult generateFullParseKey:[self dataObjectKey] parseKey:model.withoutFlagParseKey];
+        model.fullParseKey = [TCParseResult generateFullParseKey:isApiCallOriginal ? nil : [self dataObjectKey]
+                                                        parseKey:model.withoutFlagParseKey];
         model.parseSource = self.response;
         [model parse];
         if (model.error) {
@@ -350,17 +352,24 @@ static const char * kTCCancelHttpTaskKey;
  */
 - (void)handleResponse:(id)response {
     [self stopLoading];
-    _response = response;
     if (self.printLog) {
         NSLog(@"Request end:\n Request header: %@\n method: %@\n path: %@\n params: %@\n responseObject: %@",
               self.httpTask.originalRequest.allHTTPHeaderFields, self.httpTask.originalRequest.HTTPMethod, self.URLFull, self.params ,response);
     }
+    _originalResponse = response;
+    id res = [self deformResponse:response];
+    if (res != nil) {
+        response = res;
+    }
+    _response = response;
     
     if (self.originalFinishBlock) {
+        //model解析
+        [self parseResult:YES];
         self.originalFinishBlock(self.weakApi);
         return;
     }
-    
+        
     //解析数据
     if (![response isKindOfClass:NSDictionary.class]) {
         [self handleError:[NSError responseDataFormatError:response]];
@@ -410,7 +419,7 @@ static const char * kTCCancelHttpTaskKey;
     }
 
     //model解析
-    [self parseResult];
+    [self parseResult:NO];
     
     NSError *err = nil;
     if (self.requestFinishBlock) {
@@ -941,6 +950,10 @@ static const char * kTCCancelHttpTaskKey;
 }
 
 - (Class)propertyExtensionClass {
+    return nil;
+}
+
+- (id)deformResponse:(id)oResponse {
     return nil;
 }
 
