@@ -134,6 +134,8 @@ typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableD
 /// 所以此时可以将当前请求之前未完成的其他筛选条件的请求取消掉，达到优化网络的效果
 -(TCBaseApi * (^)(TCHttpCancelType))l_cancelRequestType;
 
+/// 是否在解析返回结果之前，禁用对response进行特殊处理，优先级高于deformResponse:
+-(TCBaseApi * (^)(BOOL))l_disableDeformResponse;
 
 //MARK:- 解析返回数据的相关参数设置
 /// 参数1:解析结果中的model对应的class，如果设置为nil，结果将返回response字典中的对应的原始值

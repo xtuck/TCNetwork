@@ -38,6 +38,8 @@ static const char * kTCCancelHttpTaskKey;
 @property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
 @property (nonatomic,assign) NSTimeInterval limitRequestInterval;//限制相同请求的间隔时间
 @property (nonatomic,assign) TCHttpCancelType cancelRequestType;//自动取消http请求的条件类型，默认不自动取消
+@property (nonatomic,assign) BOOL isDisableDeformResponse;//是否禁用Response的特殊处理
+
 
 @property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色，默认是随UIUserInterfaceStyle变换。
 
@@ -191,6 +193,13 @@ static const char * kTCCancelHttpTaskKey;
 -(TCBaseApi * (^)(TCHttpCancelType))l_cancelRequestType {
     return ^(TCHttpCancelType l_cancelRequestType){
         self.cancelRequestType = l_cancelRequestType;
+        return self;
+    };
+}
+
+-(TCBaseApi * (^)(BOOL))l_disableDeformResponse {
+    return ^(BOOL l_disableDeformResponse){
+        self.isDisableDeformResponse = l_disableDeformResponse;
         return self;
     };
 }
@@ -357,9 +366,11 @@ static const char * kTCCancelHttpTaskKey;
               self.httpTask.originalRequest.allHTTPHeaderFields, self.httpTask.originalRequest.HTTPMethod, self.URLFull, self.params ,response);
     }
     _originalResponse = response;
-    id res = [self deformResponse:response];
-    if (res != nil) {
-        response = res;
+    if (!self.isDisableDeformResponse) {
+        id res = [self deformResponse:response];
+        if (res != nil) {
+            response = res;
+        }
     }
     _response = response;
     
