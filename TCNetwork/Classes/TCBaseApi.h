@@ -119,7 +119,7 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 
 /// 在解析返回结果之前，对response进行特殊处理，优先级高于deformResponse:,如果return nil，则表示不处理
 -(TCBaseApi * (^)(DeformResponseBlock))l_deformResponseBlock;
-/// 调用l_deformResponseBlock时，传入TCBaseApi.disableDRB, 简化代码，
+/// 调用l_deformResponseBlock时，传入TCBaseApi.disableDRB, 简化代码，表示不处理返回结果
 +(DeformResponseBlock)disableDRB;
 
 /// 接口返回成功数据处理拦截器,会在apiCall的block执行之前调用，通常用来处理一些通用逻辑。

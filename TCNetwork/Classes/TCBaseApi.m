@@ -40,7 +40,7 @@ static const char * kTCCancelHttpTaskKey;
 @property (nonatomic,assign) NSTimeInterval limitRequestInterval;//限制相同请求的间隔时间
 @property (nonatomic,assign) TCHttpCancelType cancelRequestType;//自动取消http请求的条件类型，默认不自动取消
 
-@property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色，默认是随UIUserInterfaceStyle变换。
+@property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色
 
 @property (nonatomic,weak) TCBaseApi *weakApi;//通过finishBlock回传给http请求的调用者
 
