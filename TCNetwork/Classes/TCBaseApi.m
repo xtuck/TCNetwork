@@ -24,6 +24,7 @@ static const char * kTCCancelHttpTaskKey;
 
 @property (nonatomic,copy) ConfigHttpManagerBlock configHttpManagerBlock;
 @property (nonatomic,copy) InterceptorBlock requestFinishBlock;
+@property (nonatomic,copy) DeformResponseBlock deformResponseBlock;
 
 @property (nonatomic,strong) NSObject *params;//执行http请求时传的参数
 
@@ -38,8 +39,6 @@ static const char * kTCCancelHttpTaskKey;
 @property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
 @property (nonatomic,assign) NSTimeInterval limitRequestInterval;//限制相同请求的间隔时间
 @property (nonatomic,assign) TCHttpCancelType cancelRequestType;//自动取消http请求的条件类型，默认不自动取消
-@property (nonatomic,assign) BOOL isDisableDeformResponse;//是否禁用Response的特殊处理
-
 
 @property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色，默认是随UIUserInterfaceStyle变换。
 
@@ -197,10 +196,15 @@ static const char * kTCCancelHttpTaskKey;
     };
 }
 
--(TCBaseApi * (^)(BOOL))l_disableDeformResponse {
-    return ^(BOOL l_disableDeformResponse){
-        self.isDisableDeformResponse = l_disableDeformResponse;
+-(TCBaseApi * (^)(DeformResponseBlock))l_deformResponseBlock {
+    return ^(DeformResponseBlock l_deformResponseBlock){
+        self.deformResponseBlock = l_deformResponseBlock;
         return self;
+    };
+}
++(DeformResponseBlock)disableDRB {
+    return ^id(id res) {
+        return nil;
     };
 }
 
@@ -366,11 +370,15 @@ static const char * kTCCancelHttpTaskKey;
               self.httpTask.originalRequest.allHTTPHeaderFields, self.httpTask.originalRequest.HTTPMethod, self.URLFull, self.params ,response);
     }
     _originalResponse = response;
-    if (!self.isDisableDeformResponse) {
-        id res = [self deformResponse:response];
-        if (res != nil) {
-            response = res;
-        }
+    
+    id res = nil;
+    if (self.deformResponseBlock) {
+        res = self.deformResponseBlock(response);
+    } else {
+        res = [self deformResponse:response];
+    }
+    if (res != nil) {
+        response = res;
     }
     _response = response;
     

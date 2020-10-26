@@ -40,6 +40,7 @@ typedef void (^ProgressBlock) (NSProgress *progress);                   //请求
 
 typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableDictionary *headers);
 
+typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原始数据进行特殊处理
 
 /// 执行http请求的基类，使用时，请继承该类
 @interface TCBaseApi : NSObject
@@ -116,6 +117,11 @@ typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableD
 /// 通用的请求进度的block
 -(TCBaseApi * (^)(ProgressBlock))l_progressBlock;
 
+/// 在解析返回结果之前，对response进行特殊处理，优先级高于deformResponse:,如果return nil，则表示不处理
+-(TCBaseApi * (^)(DeformResponseBlock))l_deformResponseBlock;
+/// 调用l_deformResponseBlock时，传入TCBaseApi.disableDRB, 简化代码，
++(DeformResponseBlock)disableDRB;
+
 /// 接口返回成功数据处理拦截器,会在apiCall的block执行之前调用，通常用来处理一些通用逻辑。
 /// 例如：登录成功后需要存储用户数据，或者进行角色判断，是否允许用户登录。
 ///      获取用户信息后，需要存储用户数据。这类接口通常是很多个地方调用。
@@ -134,8 +140,6 @@ typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableD
 /// 所以此时可以将当前请求之前未完成的其他筛选条件的请求取消掉，达到优化网络的效果
 -(TCBaseApi * (^)(TCHttpCancelType))l_cancelRequestType;
 
-/// 是否在解析返回结果之前，禁用对response进行特殊处理，优先级高于deformResponse:
--(TCBaseApi * (^)(BOOL))l_disableDeformResponse;
 
 //MARK:- 解析返回数据的相关参数设置
 /// 参数1:解析结果中的model对应的class，如果设置为nil，结果将返回response字典中的对应的原始值
