@@ -222,9 +222,12 @@ TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi
 /// 不想通过子类来重写ignoreErrToastCodes方法时，可以用该方法来设置忽略错误提示的code
 -(TCBaseApi * (^)(NSArray *))l_ignoreErrToastCodeArray;
 
-/// 配置HTTPManager和headers，优先级高于configHttpManager:和configRequestHeaders:
+/// 配置HTTPManager，优先级高于configHttpManager:
 /// TCBaseApi中的HTTPManager是单例，如果不同接口需要对manager进行差异化配置时，注意正确设置manager在不同接口下对应的配置
 -(TCBaseApi * (^)(ConfigHttpManagerBlock))l_configHttpManagerBlock;
+
+/// 配置HTTP的header，优先级高于configRequestHeaders:
+-(TCBaseApi * (^)(ConfigHttpHeaderBlock))l_configHttpHeaderBlock;
 
 /// 请求结束后执行，在通过code判定成功和失败之前调用，用来处理一些通用逻辑，优先级高于requestFinish:方法
 -(TCBaseApi * (^)(InterceptorBlock))l_requestFinishBlock;

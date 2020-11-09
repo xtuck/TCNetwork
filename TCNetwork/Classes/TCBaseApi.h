@@ -38,7 +38,8 @@ typedef NSError * (^InterceptorBlock) (id api);  //接口返回成功数据处�
 typedef void (^MultipartBlock) (id<AFMultipartFormData> formData);      //上传文件使用
 typedef void (^ProgressBlock) (NSProgress *progress);                   //请求处理进度
 
-typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager,NSMutableDictionary *headers);
+typedef void (^ConfigHttpManagerBlock) (AFHTTPSessionManager *manager);
+typedef void (^ConfigHttpHeaderBlock) (NSMutableDictionary *headers);
 
 typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原始数据进行特殊处理
 
@@ -184,9 +185,12 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 /// 不想通过子类来重写ignoreErrToastCodes方法时，可以用该方法来设置忽略错误提示的code
 -(TCBaseApi * (^)(NSArray *))l_ignoreErrToastCodeArray;
 
-/// 配置HTTPManager和headers，优先级高于configHttpManager:和configRequestHeaders:
+/// 配置HTTPManager，优先级高于configHttpManager:
 /// TCBaseApi中的HTTPManager是单例，如果不同接口需要对manager进行差异化配置时，注意正确设置manager在不同接口下对应的配置
 -(TCBaseApi * (^)(ConfigHttpManagerBlock))l_configHttpManagerBlock;
+
+/// 配置HTTP的header，优先级高于configRequestHeaders:
+-(TCBaseApi * (^)(ConfigHttpHeaderBlock))l_configHttpHeaderBlock;
 
 /// 请求结束后执行，在通过code判定成功和失败之前调用，用来处理一些通用逻辑，优先级高于requestFinish:方法
 -(TCBaseApi * (^)(InterceptorBlock))l_requestFinishBlock;

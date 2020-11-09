@@ -23,6 +23,8 @@ static const char * kTCCancelHttpTaskKey;
 @property (nonatomic,copy) InterceptorBlock successResultInterceptorBlock;
 
 @property (nonatomic,copy) ConfigHttpManagerBlock configHttpManagerBlock;
+@property (nonatomic,copy) ConfigHttpHeaderBlock configHttpHeaderBlock;
+
 @property (nonatomic,copy) InterceptorBlock requestFinishBlock;
 @property (nonatomic,copy) DeformResponseBlock deformResponseBlock;
 
@@ -157,6 +159,13 @@ static const char * kTCCancelHttpTaskKey;
 -(TCBaseApi * (^)(ConfigHttpManagerBlock))l_configHttpManagerBlock {
     return ^(ConfigHttpManagerBlock l_configHttpManagerBlock){
         self.configHttpManagerBlock = l_configHttpManagerBlock;
+        return self;
+    };
+}
+
+-(TCBaseApi * (^)(ConfigHttpHeaderBlock))l_configHttpHeaderBlock {
+    return ^(ConfigHttpHeaderBlock l_configHttpHeaderBlock){
+        self.configHttpHeaderBlock = l_configHttpHeaderBlock;
         return self;
     };
 }
@@ -719,14 +728,19 @@ static const char * kTCCancelHttpTaskKey;
                 
         self->_isRequesting = YES;
         
-        AFHTTPSessionManager *currentHttpManager = self.customHttpManager ? : [self.class HTTPManager];
         NSMutableDictionary *headers = [NSMutableDictionary dictionary];
+        if (self.configHttpHeaderBlock) {
+            self.configHttpHeaderBlock(headers);
+        } else {
+            [self configRequestHeaders:headers];
+        }
+
+        AFHTTPSessionManager *currentHttpManager = self.customHttpManager ? : [self.class HTTPManager];
         @synchronized (currentHttpManager) {
             if (self.configHttpManagerBlock) {
-                self.configHttpManagerBlock(currentHttpManager,headers);
+                self.configHttpManagerBlock(currentHttpManager);
             } else {
                 [self configHttpManager:currentHttpManager];
-                [self configRequestHeaders:headers];
             }
         }
         
