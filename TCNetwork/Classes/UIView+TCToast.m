@@ -11,6 +11,7 @@
 @interface UIView()
 
 @property(nonatomic,assign) BOOL isToastLoading;
+@property(nonatomic,assign) int toastLoadingCount;
 
 @end
 
@@ -40,6 +41,16 @@ static TCToastStyle dfStyle;
 - (void)setIsToastLoading:(BOOL)isToastLoading {
     objc_setAssociatedObject(self, @selector(isToastLoading), @(isToastLoading), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
+
+- (int)toastLoadingCount {
+    NSNumber *loadingCount = objc_getAssociatedObject(self, _cmd);
+    return loadingCount.intValue;
+}
+
+- (void)setToastLoadingCount:(int)toastLoadingCount {
+    objc_setAssociatedObject(self, @selector(toastLoadingCount), @(toastLoadingCount), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
 
 //toast是否会自动延迟隐藏，避免在调用toastHide的时候，被提前隐藏了
 - (BOOL)isHudDelayHide {
@@ -91,6 +102,7 @@ static TCToastStyle dfStyle;
 }
 
 - (void)toastLoadingWithText:(NSString *)text style:(TCToastStyle)style {
+    self.toastLoadingCount = self.toastLoadingCount+1;
     MBProgressHUD *hud = nil;
     if (!self.isToastLoading) {
         self.isToastLoading = YES;
@@ -115,7 +127,8 @@ static TCToastStyle dfStyle;
 }
 
 - (void)toastHide {
-    if (!self.isToastLoading) {
+    self.toastLoadingCount = self.toastLoadingCount-1;
+    if (!self.isToastLoading || self.toastLoadingCount>0) {
         return;
     }
     self.isToastLoading = NO;
@@ -125,6 +138,7 @@ static TCToastStyle dfStyle;
             MBProgressHUD *hud = (MBProgressHUD *)subview;
             if (!hud.isHudDelayHide) {
                 [hud hideAnimated:YES];
+                self.toastLoadingCount = 0;
             }
         }
     }
