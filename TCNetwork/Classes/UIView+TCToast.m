@@ -11,7 +11,6 @@
 @interface UIView()
 
 @property(nonatomic,assign) BOOL isToastLoading;
-@property(nonatomic,assign) int toastLoadingCount;
 
 @end
 
