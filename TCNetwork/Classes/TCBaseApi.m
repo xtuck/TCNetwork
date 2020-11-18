@@ -41,6 +41,7 @@ static const char * kTCCancelHttpTaskKey;
 @property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
 @property (nonatomic,assign) NSTimeInterval limitRequestInterval;//限制相同请求的间隔时间
 @property (nonatomic,assign) TCHttpCancelType cancelRequestType;//自动取消http请求的条件类型，默认不自动取消
+@property (nonatomic,assign) TCApiCallType apiCallType;//多请求同步调用时，提前设置的apiCall方式
 
 @property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色
 
@@ -77,6 +78,35 @@ static const char * kTCCancelHttpTaskKey;
     };
 }
 
++ (void)multiCallApis:(NSArray<TCBaseApi*> *)apis finish:(void(^)(void))finish {
+    __block NSInteger count = apis.count;
+    dispatch_block_t checkEnd = ^{
+        count--;
+        if (count<=0) {
+            if (finish) {
+                finish();
+            }
+        }
+    };
+    
+    for (TCBaseApi *api in apis) {
+        if (api.apiCallType == TCApiCall_Success) {
+            api.apiCallType = TCApiCall_Default;
+            NSLog(@"错误设置请求方式为TCApiCall_Success，已自动更换为TCApiCall_Default");
+        }
+        if (api.apiCallType == TCApiCall_Original) {
+            api.apiCallOriginal(^(TCBaseApi *api) {
+                checkEnd();
+            });
+        } else {
+            api.apiCall(^(TCBaseApi *api) {
+                checkEnd();
+            });
+        }
+    }
+    
+}
+
 -(TCBaseApi * (^)(UIView *l_loadOnView))l_loadOnView {
     return ^(UIView * l_loadOnView){
         return self.l_loadOnView_errOnView(l_loadOnView,l_loadOnView);
@@ -94,6 +124,13 @@ static const char * kTCCancelHttpTaskKey;
 -(TCBaseApi * (^)(TCToastStyle))l_toastStyle {
     return ^(TCToastStyle l_toastStyle){
         self.toastStyle = l_toastStyle;
+        return self;
+    };
+}
+
+-(TCBaseApi * (^)(TCApiCallType))l_apiCallType {
+    return ^(TCApiCallType l_apiCallType){
+        self.apiCallType = l_apiCallType;
         return self;
     };
 }

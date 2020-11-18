@@ -31,6 +31,11 @@ typedef NS_ENUM(NSUInteger, TCHttpCancelType) {
     TCCancelByURLAndParams,     //相同的url，并且参数相同，重复请求时，未完成的请求将被取消
 };
 
+typedef NS_ENUM(NSUInteger, TCApiCallType) {
+    TCApiCall_Default,//apiCall
+    TCApiCall_Original,//apiCallOriginal
+    TCApiCall_Success//apiCallSuccess
+};
 
 typedef void (^FinishBlock) (id api);
 typedef NSError * (^InterceptorBlock) (id api);  //接口返回成功数据处理拦截器
@@ -167,6 +172,15 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 /// 回传的结果是当前执行请求的对象TCBaseApi，TCBaseApi基类已经做了请求成功的判断
 /// 针对某些只处理请求成功情况的请求，简化代码。
 -(TCBaseApi * (^)(FinishBlock))apiCallSuccess;
+
+
+//MARK:- 多请求同步执行，同步返回
+
+//执行api请求的方式，不设置时，默认：TCApiCall_Default，即最终调用apiCall
+-(TCBaseApi * (^)(TCApiCallType))l_apiCallType;
+
+//多请求同步执行，结果同步返回。目前apiCall方式设置只支持TCApiCall_Default,TCApiCall_Original
++ (void)multiCallApis:(NSArray<TCBaseApi*> *)apis finish:(void(^)(void))finish;
 
 
 //MARK:- Extensions  以下方法，是为了支持以非继承的方式来使用TCBaseApi

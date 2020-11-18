@@ -31,8 +31,9 @@ typedef NS_ENUM(NSUInteger, TCToastStyle) {
 
 @interface UIView (TCToast)
 
+@property(nonatomic,assign,readonly) int toastLoadingCount;//无敌风火轮
+
 //TODO:移形换影，待实现
-@property(nonatomic,assign,readonly) int toastLoadingCount;
 
 - (void)toastWithText:(NSString *)text;
 - (void)toastWithText:(NSString *)text style:(TCToastStyle)style;
