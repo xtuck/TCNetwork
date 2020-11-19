@@ -2,7 +2,7 @@
 //  NSMutableDictionary+paramsSet.h
 //  RRT
 //
-//  Created by 涂操 on 15/9/10.
+//  Created by xtuck on 15/9/10.
 //  Copyright (c) 2015年 Asiainfo. All rights reserved.
 //
 

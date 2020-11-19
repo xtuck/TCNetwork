@@ -16,7 +16,7 @@ NSString * const kDOtherKey = @"other";
 
 
 NSString * const kParseArray = @"()";//指定解析结果为数组
-NSString * const kParseRoot = @"~";//解析原始的httpResponse
+NSString * const kParseRoot = @"~";//解析根节点Response
 NSString * const kParseData = @"#";//解析dataObjectKey对应的数据
 NSString * const kParseFlag = @"?";//解析的key加上标记，便于后面根据标记查询结果
 
@@ -56,7 +56,6 @@ extern NSString * TCPArrayInData(NSString *key) {
 
 extern NSString * TCPAddFlag(NSString *key, NSString *flag) {
     NSString *parseKey = key?:@"";
-    //return parseKey.addParseFlag(flag);
     if (key.length) {
         NSInteger loc = [key rangeOfString:kParseFlag options:NSBackwardsSearch].location;
         if (loc != NSNotFound) {
@@ -70,19 +69,17 @@ extern NSString * TCPAddFlag(NSString *key, NSString *flag) {
 
 @end
 
-@implementation NSString (TCParseHelp)
+#pragma mark - TCNWeakContainer
 
-- (NSString * (^)(NSString *flagKey))addParseFlag {
-    return ^(NSString *flag) {
-        NSString *parseKey = nil;
-        NSInteger loc = [self rangeOfString:kParseFlag options:NSBackwardsSearch].location;
-        if (loc != NSNotFound) {
-            parseKey = [self substringToIndex:loc];
-        } else {
-            parseKey = self;
-        }
-        return [NSString stringWithFormat:@"%@%@%@",parseKey,kParseFlag,flag?:@""];
-    };
+@implementation TCNWeakContainer
+
+- (instancetype)initWithWeakObj:(id)obj {
+    self = [super init];
+    if (self) {
+        _weakObj = obj;
+    }
+    return self;
 }
 
 @end
+

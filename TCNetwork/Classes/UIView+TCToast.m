@@ -7,10 +7,9 @@
 
 #import "UIView+TCToast.h"
 #import <objc/runtime.h>
+#import "TCNetworkHelp.h"
 
 @interface UIView()
-
-@property(nonatomic,assign) BOOL isToastLoading;
 
 @end
 
@@ -61,6 +60,54 @@ static TCToastStyle dfStyle;
     objc_setAssociatedObject(self, @selector(isHudDelayHide), @(isHudDelayHide), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
+- (UIView *)catcherView {
+    TCNWeakContainer *container = objc_getAssociatedObject(self, _cmd);
+    return container.weakObj;
+}
+
+- (void)setCatcherView:(UIView *)catcherView {
+    TCNWeakContainer *container = nil;
+    if (catcherView != nil) {
+        container = [[TCNWeakContainer alloc] initWithWeakObj:catcherView];
+    }
+    objc_setAssociatedObject(self, @selector(catcherView), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+- (UIView *)throwerView {
+    TCNWeakContainer *container = objc_getAssociatedObject(self, _cmd);
+    return container.weakObj;
+}
+
+- (void)setThrowerView:(UIView *)throwerView {
+    TCNWeakContainer *container = nil;
+    if (throwerView != nil) {
+        container = [[TCNWeakContainer alloc] initWithWeakObj:throwerView];
+    }
+    objc_setAssociatedObject(self, @selector(throwerView), container, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (UIView *)loadingThrower:(UIView *)previousView {
+    self.throwerView = previousView;
+    previousView.catcherView = self;
+    return self;
+}
+
+- (TCToastStyle)currentLoadingStyle {
+    NSNumber *loadingStyle = objc_getAssociatedObject(self, _cmd);
+    return loadingStyle.integerValue;
+}
+
+- (void)setCurrentLoadingStyle:(NSInteger)currentLoadingStyle {
+    objc_setAssociatedObject(self, @selector(currentLoadingStyle), @(currentLoadingStyle), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
+- (NSString *)currentLoadingText {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setCurrentLoadingText:(NSString *)currentLoadingText {
+    objc_setAssociatedObject(self, @selector(currentLoadingText), currentLoadingText, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
 
 - (void)toastWithText:(NSString *)text {
     [self toastWithText:text style:dfStyle];
@@ -101,9 +148,11 @@ static TCToastStyle dfStyle;
 }
 
 - (void)toastLoadingWithText:(NSString *)text style:(TCToastStyle)style {
+    self.currentLoadingText = text;
+    self.currentLoadingStyle = style;
     self.toastLoadingCount = self.toastLoadingCount+1;
     MBProgressHUD *hud = nil;
-    if (!self.isToastLoading) {
+    if (!self.isToastLoading && self.throwerView.toastLoadingCount<=0) {
         self.isToastLoading = YES;
         hud = [MBProgressHUD showHUDAddedTo:self animated:YES];
         //这里可以考虑扩展容错机制，因外部调用toastLoading和toastHide没有正确配对，可能会造成屏幕锁住无法交互
@@ -128,8 +177,17 @@ static TCToastStyle dfStyle;
 - (void)toastHide {
     self.toastLoadingCount = self.toastLoadingCount-1;
     if (!self.isToastLoading || self.toastLoadingCount>0) {
+        if (self.toastLoadingCount <= 0) {
+            //未显示过loading，但是已经完成了任务，更换接球手
+            self.throwerView.catcherView = self.catcherView;
+            self.catcherView.throwerView = self.throwerView;
+            //退隐江湖
+            self.throwerView = nil;
+            self.catcherView = nil;
+        }
         return;
     }
+
     self.isToastLoading = NO;
     //[MBProgressHUD hideHUDForView:self animated:YES];
     for (UIView *subview in self.subviews) {
@@ -141,6 +199,14 @@ static TCToastStyle dfStyle;
             }
         }
     }
+
+    self.catcherView.throwerView = nil;//这个需要在前
+    if (self.catcherView.toastLoadingCount > 0 && !self.catcherView.isToastLoading) {
+        self.catcherView.toastLoadingCount = self.catcherView.toastLoadingCount - 1;
+        [self.catcherView toastLoadingWithText:self.catcherView.currentLoadingText
+                                         style:self.catcherView.currentLoadingStyle];//抛球
+    }
+    self.catcherView = nil;//功成身退
 }
 
 

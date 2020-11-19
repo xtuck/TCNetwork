@@ -90,7 +90,7 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 //MARK:- 链式方式设置参数
 
 //MARK:- 初始化
-/// 初始化，传入拼接好的url，使用NSString分类方法 l_joinURL 进行拼接。（推荐）
+/// 初始化，传入拼接好的url，使用NSString分类方法 l_joinURL 进行拼接。
 +(TCBaseApi * (^)(NSString *))apiInitURLFull;
 
 /// 传入url各个组成部分，最后的参数需要传nil。避免使用者忘记传nil。

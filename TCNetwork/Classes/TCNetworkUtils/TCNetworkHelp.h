@@ -15,7 +15,7 @@ extern NSString * const kDOtherKey;
 
 
 extern NSString * const kParseArray;//指定解析结果为数组
-extern NSString * const kParseRoot;//解析原始的httpResponse
+extern NSString * const kParseRoot;//解析根节点Response
 extern NSString * const kParseData;//解析dataObjectKey对应的数据
 extern NSString * const kParseFlag;//解析的key加上标记，便于后面根据标记查询结果
 
@@ -35,12 +35,15 @@ extern NSString * TCPAddFlag(NSString *key, NSString *flag);
 
 @end
 
-@interface NSString (TCParseHelp)
 
-/// 方法作用同：TCPAddFlag  因为是实例方法，所以需要保证调用者不为nil
-- (NSString * (^)(NSString *flagKey))addParseFlag;
+@interface TCNWeakContainer : NSObject
+
+@property (nonatomic, readonly, weak) id weakObj;
+
+- (instancetype)initWithWeakObj:(id)obj;
 
 @end
+
 
 
 
