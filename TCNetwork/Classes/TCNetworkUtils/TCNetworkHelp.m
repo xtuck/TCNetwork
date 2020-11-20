@@ -15,7 +15,7 @@ NSString * const kDDataKey = @"data";
 NSString * const kDOtherKey = @"other";
 
 
-NSString * const kParseArray = @"()";//指定解析结果为数组
+NSString * const kParseArray = @"()";//指定解析结果为数组，单独传入此值时，表示解析dataObjectKey对应的数组数据
 NSString * const kParseRoot = @"~";//解析根节点Response
 NSString * const kParseData = @"#";//解析dataObjectKey对应的数据
 NSString * const kParseFlag = @"?";//解析的key加上标记，便于后面根据标记查询结果

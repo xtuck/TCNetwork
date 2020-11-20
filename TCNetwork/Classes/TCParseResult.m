@@ -296,14 +296,19 @@
                 }
                 NSRange rang = NSMakeRange(0, 1);
                 NSUInteger comma = [indexStr rangeOfString:@","].location;
+                NSInteger locationTemp = 0;
                 if (comma != NSNotFound) {
                     NSString *loc = [indexStr substringToIndex:comma];
-                    rang.location = loc.integerValue > 0 ? loc.integerValue : 0;
+                    locationTemp = loc.integerValue;
                     NSString *len = [indexStr substringFromIndex:comma+1];
                     rang.length = len.integerValue > 0 ? len.integerValue : 0;
                 } else {
-                    rang.location = indexStr.integerValue > 0 ? indexStr.integerValue : 0;
+                    locationTemp = indexStr.integerValue;
                 }
+                if (locationTemp >= 0) {
+                    rang.location = locationTemp;
+                }
+                
                 NSArray *resArray = (NSArray *)resultDic;
                 if (rang.location >= resArray.count) {
                     if (err) {
@@ -312,6 +317,14 @@
                     }
                     return nil;
                 }
+                if (locationTemp < 0) {
+                    locationTemp = resArray.count + locationTemp;
+                    if (locationTemp < 0) {
+                        locationTemp = 0;
+                    }
+                    rang.location = locationTemp;
+                }
+                
                 if (comma != NSNotFound) {
                     if (rang.length == 0 || rang.location + rang.length > resArray.count) {
                         rang.length = resArray.count - rang.location;
