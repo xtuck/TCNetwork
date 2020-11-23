@@ -431,13 +431,17 @@ static const char * kTCCancelHttpTaskKey;
     if (self.originalFinishBlock) {
         //model解析
         [self parseResult:YES];
-        self.originalFinishBlock(self.weakApi);
+        [self mainThreadExe:^{
+            self.originalFinishBlock(self.weakApi);
+        }];
         return;
     }
         
     //解析数据
     if (![response isKindOfClass:NSDictionary.class]) {
-        [self handleError:[NSError responseDataFormatError:response]];
+        [self mainThreadExe:^{
+            [self handleError:[NSError responseDataFormatError:response]];
+        }];
         return;
     }
     
@@ -486,35 +490,37 @@ static const char * kTCCancelHttpTaskKey;
     //model解析
     [self parseResult:NO];
     
-    NSError *err = nil;
-    if (self.requestFinishBlock) {
-        err = self.requestFinishBlock(self.weakApi);
-    } else {
-        err = [self requestFinish:self.weakApi];
-    }
-    if (err) {
-        [self handleError:err];
-        return;
-    }
-
-    //判断结果是否成功
-    if(_code.isNonEmpty) {
-        NSArray *codes = self.successCodeArray.count ? self.successCodeArray : [self successCodes];
-        if ([self isContainsCode:_code arr:codes]) {
-            //成功
-            [self handleSuccess];
+    [self mainThreadExe:^{
+        NSError *err = nil;
+        if (self.requestFinishBlock) {
+            err = self.requestFinishBlock(self.weakApi);
+        } else {
+            err = [self requestFinish:self.weakApi];
+        }
+        if (err) {
+            [self handleError:err];
             return;
         }
-    } else {
-        //code为空
-        if (self.finishBlock) {
-            self.finishBlock(self.weakApi);
+
+        //判断结果是否成功
+        if(self->_code.isNonEmpty) {
+            NSArray *codes = self.successCodeArray.count ? self.successCodeArray : [self successCodes];
+            if ([self isContainsCode:self->_code arr:codes]) {
+                //成功
+                [self handleSuccess];
+                return;
+            }
+        } else {
+            //code为空
+            if (self.finishBlock) {
+                self.finishBlock(self.weakApi);
+            }
+            return;
         }
-        return;
-    }
-    //失败
-    NSError *error = [NSError responseResultError:_code msg:_msg];
-    [self handleError:error];
+        //失败
+        NSError *error = [NSError responseResultError:self->_code msg:self->_msg];
+        [self handleError:error];
+    }];
 }
 
 - (BOOL)isContainsCode:(NSString *)code arr:(NSArray *)codes {
@@ -570,11 +576,13 @@ static const char * kTCCancelHttpTaskKey;
         }
     }
     
-    if (self.originalFinishBlock) {
-        self.originalFinishBlock(self.weakApi);
-    } else if (self.finishBlock) {
-        self.finishBlock(self.weakApi);
-    }
+    [self mainThreadExe:^{
+        if (self.originalFinishBlock) {
+            self.originalFinishBlock(self.weakApi);
+        } else if (self.finishBlock) {
+            self.finishBlock(self.weakApi);
+        }
+    }];
 }
 
 - (BOOL)isErrorIgnored {
@@ -741,26 +749,30 @@ static const char * kTCCancelHttpTaskKey;
         };
         void (^failure)(NSURLSessionDataTask *, NSError *) = ^(NSURLSessionDataTask *task, NSError *error) {
             removeCancelTask(task);
-            self->_error = error;
-            NSError *err = nil;
-            if (self.requestFinishBlock) {
-                err = self.requestFinishBlock(self.weakApi);
-            } else {
-                err = [self requestFinish:self.weakApi];
-            }
-            if (err) {
-                [self handleError:err];
-            } else {
-                [self handleError:error];
-            }
-            NSNumber *isByTCCancel = objc_getAssociatedObject(task, &kTCCancelHttpTaskKey);
-            if (isByTCCancel.boolValue) {
-                objc_setAssociatedObject(cancelTask, &kTCCancelHttpTaskKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-                if (self.printLog) {
-                    NSLog(@"一个请求已被自动取消:%p \n cancelKey:%@",self,cancelKey);
+            [self mainThreadExe:^{
+                self->_error = error;
+                NSError *err = nil;
+                if (self.requestFinishBlock) {
+                    err = self.requestFinishBlock(self.weakApi);
+                } else {
+                    err = [self requestFinish:self.weakApi];
                 }
-                dispatch_semaphore_signal(self.cancelTaskLock);//解锁
-            }
+                if (err) {
+                    [self handleError:err];
+                } else {
+                    [self handleError:error];
+                }
+                
+                //为了保证接口请求的完成顺序，这里需要放后面
+                NSNumber *isByTCCancel = objc_getAssociatedObject(task, &kTCCancelHttpTaskKey);
+                if (isByTCCancel.boolValue) {
+                    objc_setAssociatedObject(cancelTask, &kTCCancelHttpTaskKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+                    if (self.printLog) {
+                        NSLog(@"一个请求已被自动取消:%p \n cancelKey:%@",self,cancelKey);
+                    }
+                    dispatch_semaphore_signal(self.cancelTaskLock);//解锁
+                }
+            }];
         };
                 
         self->_isRequesting = YES;
