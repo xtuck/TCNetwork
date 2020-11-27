@@ -78,33 +78,36 @@ static const char * kTCCancelHttpTaskKey;
     };
 }
 
-+ (void)multiCallApis:(NSArray<TCBaseApi*> *)apis finish:(void(^)(void))finish {
++ (void)multiCallApis:(NSArray<TCBaseApi*> *)apis finish:(void(^)(NSArray<TCBaseApi*> *))finish {
     __block NSInteger count = apis.count;
+    NSMutableArray *backApis = [apis mutableCopy];//延长apis生命周期
     dispatch_block_t checkEnd = ^{
         count--;
         if (count<=0) {
             if (finish) {
-                finish();
+                finish(backApis);
             }
+            [backApis removeAllObjects];//释放apis
         }
     };
-    
+
     for (TCBaseApi *api in apis) {
         if (api.apiCallType == TCApiCall_Success) {
             api.apiCallType = TCApiCall_Default;
             NSLog(@"错误设置请求方式为TCApiCall_Success，已自动更换为TCApiCall_Default");
         }
         if (api.apiCallType == TCApiCall_Original) {
-            api.apiCallOriginal(^(TCBaseApi *api) {
+            api.apiCallOriginal(^(TCBaseApi *wApi) {
+                wApi.originalFinishBlock = nil;
                 checkEnd();
             });
         } else {
-            api.apiCall(^(TCBaseApi *api) {
+            api.apiCall(^(TCBaseApi *wApi) {
+                wApi.finishBlock = nil;
                 checkEnd();
             });
         }
     }
-    
 }
 
 -(TCBaseApi * (^)(UIView *l_loadOnView))l_loadOnView {

@@ -184,7 +184,7 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 -(TCBaseApi * (^)(TCApiCallType))l_apiCallType;
 
 //多请求同步执行，结果同步返回。目前apiCall方式设置只支持TCApiCall_Default,TCApiCall_Original
-+ (void)multiCallApis:(NSArray<TCBaseApi*> *)apis finish:(void(^)(void))finish;
++ (void)multiCallApis:(NSArray<TCBaseApi*> *)apis finish:(void(^)(NSArray<TCBaseApi*> *))finish;
 
 
 //MARK:- Extensions  以下方法，是为了支持以非继承的方式来使用TCBaseApi
