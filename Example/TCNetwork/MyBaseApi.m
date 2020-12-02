@@ -15,7 +15,7 @@
 @implementation MyBaseApi
 
 + (NSString *)baseUrl {
-    return @"http://xxxxxxxxxxxxxxxxx";
+    return @"http://154.85.49.201:8881";
 }
 
 - (NSString *)codeKey {

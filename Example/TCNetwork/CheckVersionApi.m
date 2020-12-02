@@ -16,8 +16,8 @@
     //return self.apiInitURLFull([NSString stringWithFormat:@"%@/%@",self.baseUrl,@"contract/appversion/ios"])
 
     //apiInitURLJoin方式如下，因为参数是可变参数，记得末尾要加nil，和以前使用UIAlertView时候，设置otherButtonTitles参数一样
-    return self.apiInitURLJoin(self.baseUrl,@"contract/appversion/ios",nil)
-    .l_httpMethod(TCHttp_GET) //不设置l_httpMethod时，默认的是TCHttp_POST
+    return self.apiInitURLJoin(self.baseUrl,@"/shop/api/appversion?appType=ios&tenantCode=1",nil)
+//    .l_httpMethod(TCHttp_GET) //不设置l_httpMethod时，默认的是TCHttp_POST
     .l_successCodeArray(@[@0]);//l_successCodeArray的设置优先级大于父类中successCodes方法，如果不设置，则使用父类中的successCodes配置
 }
 

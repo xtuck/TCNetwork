@@ -8,12 +8,31 @@
 
 #import "TCAppDelegate.h"
 #import "CheckVersionApi.h"
+#import <Aspects/Aspects.h>
+#import "AFURLSessionManager.h"
 
 @implementation TCAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
+    Class clazz = NSClassFromString(@"AFURLSessionManagerTaskDelegate");
+    [clazz aspect_hookSelector:NSSelectorFromString(@"URLSession:task:didCompleteWithError:") withOptions:AspectPositionBefore usingBlock:^(id<AspectInfo> aspectInfo) {
+        if ([NSThread mainThread]) {
+            NSLog(@"hook~~~~~~~~~~~  主线程");
+
+        } else {
+            NSLog(@"hook~~~~~~~~~~~  子线程");
+        }
+    } error:nil];
+
+    
+
+    //AFURLSessionManagerTaskDelegate
+//    - (void)URLSession:(__unused NSURLSession *)session
+//                  task:(NSURLSessionTask *)task
+//    didCompleteWithError:(NSError *)error
+
     return YES;
 }
 
@@ -35,11 +54,13 @@
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
-//    __block CheckVersionApi *api = (CheckVersionApi *)[CheckVersionApi checkVersion].apiCallSuccess(^(NSDictionary *res) {
-//        NSLog(@"获取到版本检测的返回结果：\n%@",res);
-//        NSString *msg = api.msg;
-//        NSLog(@"赋值结果:%@",msg);
-//    });
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        __block CheckVersionApi *api = (CheckVersionApi *)[CheckVersionApi checkVersion].apiCallSuccess(^(NSDictionary *res) {
+            NSLog(@"获取到版本检测的返回结果：\n%@",res);
+            NSString *msg = api.msg;
+            NSLog(@"赋值结果:%@",msg);
+        });
+    });
 
 }
 
