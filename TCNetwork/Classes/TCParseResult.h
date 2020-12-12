@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
+@class TCBaseApi;
 @interface TCParseResult : NSObject
 
 @property (nonatomic,copy,) NSString *originalParseKey;
@@ -21,6 +22,7 @@
 @property (nonatomic,strong) NSError *error;
 @property (nonatomic,strong) NSObject *parseResult;
     
+@property (nonatomic,weak) TCBaseApi *apiDelegate;
 
 - (void)parse;
 
@@ -35,7 +37,6 @@
 
 /// 通过key获取到最终的数据：字典，数组，基本数据(NSString/NSNumber)，nil
 + (id (^)(id source,NSString *fullKey,NSError **err))parse;
-+ (id)parseWithSource:(id)source key:(NSString *)fullKey err:(NSError **)err;
 + (id (^)(id source,NSString *fullKey))lazyParse;
 
 + (void)printDebugLog:(NSString *)log;

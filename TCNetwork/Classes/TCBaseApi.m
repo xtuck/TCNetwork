@@ -28,28 +28,11 @@ static const char * kTCCancelHttpTaskKey;
 @property (nonatomic,copy) InterceptorBlock requestFinishBlock;
 @property (nonatomic,copy) DeformResponseBlock deformResponseBlock;
 
-@property (nonatomic,strong) NSObject *params;//执行http请求时传的参数
-
-@property (nonatomic,strong) NSArray *successCodeArray;//作用：用来判断返回结果是否是成功的结果，优先级高于successCodes方法
-@property (nonatomic,strong) NSArray *ignoreErrToastCodeArray;
-@property (nonatomic,strong) NSDictionary *parseKeyMap;
-@property (nonatomic,strong) AFHTTPSessionManager *customHttpManager;
-
-@property (nonatomic,weak) UIView *loadOnView; //显示loading提示的容器
-@property (nonatomic,weak) UIView *errOnView;//显示错误信息的toast容器
-
-@property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
-@property (nonatomic,assign) NSTimeInterval limitRequestInterval;//限制相同请求的间隔时间
-@property (nonatomic,assign) TCHttpCancelType cancelRequestType;//自动取消http请求的条件类型，默认不自动取消
-@property (nonatomic,assign) TCApiCallType apiCallType;//多请求同步调用时，提前设置的apiCall方式
-
-@property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色
-
 @property (nonatomic,weak) TCBaseApi *weakApi;//通过finishBlock回传给http请求的调用者
 
 @property (nonatomic,strong) NSMutableArray *parseResultArray;//存储解析结果的数组，resultParseObject为数组中的第一个对象的属性值
 
-@property (nonatomic,weak) id<AspectToken> aspectToken;//用来取消钩子
+@property (nonatomic,strong) id<AspectToken> aspectToken;//用来取消钩子
 
 @end
 
@@ -60,12 +43,32 @@ static const char * kTCCancelHttpTaskKey;
     return ^(NSString * apiInitURLFull){
         TCBaseApi *api = [[self.class alloc] init];
         api->_URLFull = apiInitURLFull;
-        api.httpMethod = TCHttp_POST;
-        __weak typeof(api) weakApi = api;
-        api.weakApi = weakApi;
-        api.toastStyle = UIView.getDefaultStyle;
+        [api apiDefaultConfig];
         return api;
     };
+}
+
+//以下是默认配置
+- (void)apiDefaultConfig {
+    __weak typeof(self) weakApi = self;
+    self.weakApi = weakApi;
+    self.toastStyle = UIView.getDefaultStyle;
+    self.finishBackQueue = dispatch_get_main_queue();
+    self.codeKey = kDCodeKey;
+    self.msgKey = kDMsgKey;
+    self.timeKey = kDTimeKey;
+    self.dataObjectKey = kDDataKey;
+    self.otherObjectKey = kDOtherKey;
+    self.successCodeArray = @[@"1",@"ok",@"yes",@"success"];
+    self.ignoreErrToastCodeArray = @[@(APIErrorCode_HttpCancel)];//取消请求的错误码是-999
+#if DEBUG
+    self.printLog = YES;
+#endif
+    [self apiCustomConfig];
+}
+
+/// 子类重写
+- (void)apiCustomConfig {
 }
 
 +(TCBaseApi * (^)(NSString *,...))apiInitURLJoin {
@@ -92,10 +95,6 @@ static const char * kTCCancelHttpTaskKey;
     };
 
     for (TCBaseApi *api in apis) {
-        if (api.apiCallType == TCApiCall_Success) {
-            api.apiCallType = TCApiCall_Default;
-            NSLog(@"错误设置请求方式为TCApiCall_Success，已自动更换为TCApiCall_Default");
-        }
         if (api.apiCallType == TCApiCall_Original) {
             api.apiCallOriginal(^(TCBaseApi *wApi) {
                 wApi.originalFinishBlock = nil;
@@ -110,6 +109,16 @@ static const char * kTCCancelHttpTaskKey;
     }
 }
 
+
+- (TCBaseApi * (^)(ConfigBlock))l_customConfigBlock {
+    return ^(ConfigBlock l_customConfigBlock){
+        if (l_customConfigBlock) {
+            l_customConfigBlock(self.weakApi);
+        }
+        return self;
+    };
+}
+
 -(TCBaseApi * (^)(UIView *l_loadOnView))l_loadOnView {
     return ^(UIView * l_loadOnView){
         return self.l_loadOnView_errOnView(l_loadOnView,l_loadOnView);
@@ -118,8 +127,15 @@ static const char * kTCCancelHttpTaskKey;
 
 -(TCBaseApi * (^)(UIView *, UIView *))l_loadOnView_errOnView {
     return ^(UIView * l_loadOnView,UIView * l_errOnView){
+        return self.l_loadOnView_errOnView_loadingText(l_loadOnView,l_errOnView,nil);
+    };
+}
+
+-(TCBaseApi * (^)(UIView *, UIView *, NSString *))l_loadOnView_errOnView_loadingText {
+    return ^(UIView *l_loadOnView,UIView *l_errOnView,NSString *loadingText){
         self.loadOnView = l_loadOnView;
         self.errOnView = l_errOnView;
+        self.loadingText = loadingText;
         return self;
     };
 }
@@ -131,8 +147,8 @@ static const char * kTCCancelHttpTaskKey;
     };
 }
 
--(TCBaseApi * (^)(TCApiCallType))l_apiCallType {
-    return ^(TCApiCallType l_apiCallType){
+-(TCBaseApi * (^)(TCApiMultiCallType))l_apiCallType {
+    return ^(TCApiMultiCallType l_apiCallType){
         self.apiCallType = l_apiCallType;
         return self;
     };
@@ -170,7 +186,7 @@ static const char * kTCCancelHttpTaskKey;
 
 -(TCBaseApi * (^)(NSObject *))l_params {
     return ^(NSObject *l_params){
-        self.params = l_params;
+        self->_params = l_params;
         return self;
     };
 }
@@ -185,13 +201,6 @@ static const char * kTCCancelHttpTaskKey;
 -(TCBaseApi * (^)(NSArray *))l_ignoreErrToastCodeArray {
     return ^(NSArray *l_ignoreErrToastCodeArray){
         self.ignoreErrToastCodeArray = l_ignoreErrToastCodeArray;
-        return self;
-    };
-}
-
--(TCBaseApi * (^)(NSDictionary *))l_parseKeyMap {
-    return ^(NSDictionary *l_parseKeyMap){
-        self.parseKeyMap = l_parseKeyMap;
         return self;
     };
 }
@@ -381,6 +390,7 @@ static const char * kTCCancelHttpTaskKey;
     model.originalParseKey = key;
     model.parseFlag = flag;
     model.withoutFlagParseKey = tempKey;
+    model.apiDelegate = self;
     [self.parseResultArray addObject:model];
 }
 
@@ -388,7 +398,7 @@ static const char * kTCCancelHttpTaskKey;
 - (void)parseResult:(BOOL)isApiCallOriginal {
     for (int i=0; i<_parseResultArray.count; i++) {
         TCParseResult *model = _parseResultArray[i];
-        model.fullParseKey = [TCParseResult generateFullParseKey:isApiCallOriginal ? nil : [self dataObjectKey]
+        model.fullParseKey = [TCParseResult generateFullParseKey:isApiCallOriginal ? nil : self.dataObjectKey
                                                         parseKey:model.withoutFlagParseKey];
         model.parseSource = self.response;
         [model parse];
@@ -399,13 +409,6 @@ static const char * kTCCancelHttpTaskKey;
             _resultParseObject = model.parseResult;
         }
     }
-}
-
-- (NSString *)getParseKey:(NSString *)defaultKey {
-    if (defaultKey.length && self.parseKeyMap.count) {
-        return self.parseKeyMap[defaultKey];
-    }
-    return nil;
 }
 
 /**
@@ -434,7 +437,7 @@ static const char * kTCCancelHttpTaskKey;
     if (self.originalFinishBlock) {
         //model解析
         [self parseResult:YES];
-        [self mainThreadExe:^{
+        [self finishBackThreadExe:^{
             self.originalFinishBlock(self.weakApi);
         }];
         return;
@@ -442,7 +445,7 @@ static const char * kTCCancelHttpTaskKey;
         
     //解析数据
     if (![response isKindOfClass:NSDictionary.class]) {
-        [self mainThreadExe:^{
+        [self finishBackThreadExe:^{
             [self handleError:[NSError responseDataFormatError:response]];
         }];
         return;
@@ -465,35 +468,30 @@ static const char * kTCCancelHttpTaskKey;
         free(propertyList);
     }
 
-    NSString *codeKey = [self getParseKey:kDCodeKey]?:[self codeKey];
-    if (codeKey.isNonEmpty) {
-        _code = response[codeKey];
+    if (self.codeKey.isNonEmpty) {
+        _code = response[self.codeKey];
     }
     if ([_code isKindOfClass:NSNumber.class]) {
         //为了统一格式
         _code = [(NSNumber *)_code stringValue];
     }
-    NSString *msgKey = [self getParseKey:kDMsgKey]?:[self msgKey];
-    if (msgKey.isNonEmpty) {
-        _msg = response[msgKey];
+    if (self.msgKey.isNonEmpty) {
+        _msg = response[self.msgKey];
     }
-    NSString *timeKey =  [self getParseKey:kDTimeKey]?:[self timeKey];
-    if (timeKey.isNonEmpty) {
-        _time = response[timeKey];
+    if (self.timeKey.isNonEmpty) {
+        _time = response[self.timeKey];
     }
-    NSString *dataObjectKey = [self getParseKey:kDDataKey]?:[self dataObjectKey];
-    if (dataObjectKey.isNonEmpty) {
-        _dataObject = response[dataObjectKey];
+    if (self.dataObjectKey.isNonEmpty) {
+        _dataObject = response[self.dataObjectKey];
     }
-    NSString *otherObjectKey = [self getParseKey:kDOtherKey]?:[self otherObjectKey];
-    if (otherObjectKey.isNonEmpty) {
-        _otherObject = response[otherObjectKey];
+    if (self.otherObjectKey.isNonEmpty) {
+        _otherObject = response[self.otherObjectKey];
     }
 
     //model解析
     [self parseResult:NO];
     
-    [self mainThreadExe:^{
+    [self finishBackThreadExe:^{
         NSError *err = nil;
         if (self.requestFinishBlock) {
             err = self.requestFinishBlock(self.weakApi);
@@ -507,8 +505,7 @@ static const char * kTCCancelHttpTaskKey;
 
         //判断结果是否成功
         if(self->_code.isNonEmpty) {
-            NSArray *codes = self.successCodeArray.count ? self.successCodeArray : [self successCodes];
-            if ([self isContainsCode:self->_code arr:codes]) {
+            if ([self isContainsCode:self->_code arr:self.successCodeArray]) {
                 //成功
                 [self handleSuccess];
                 return;
@@ -571,21 +568,14 @@ static const char * kTCCancelHttpTaskKey;
             } else if ([error isKindOfClass:NSError.class]){
                 errMsg = error.localizedDescription;
             }
-            [self mainThreadExe:^{
-                if (![self showCustomTost:self.errOnView text:errMsg]) {
-                    [self.errOnView toastWithText:errMsg style:self.toastStyle];
-                }
-            }];
+            [self toastOnView:self.errOnView text:errMsg action:TCToast_Error];
         }
     }
-    
-    [self mainThreadExe:^{
-        if (self.originalFinishBlock) {
-            self.originalFinishBlock(self.weakApi);
-        } else if (self.finishBlock) {
-            self.finishBlock(self.weakApi);
-        }
-    }];
+    if (self.originalFinishBlock) {
+        self.originalFinishBlock(self.weakApi);
+    } else if (self.finishBlock) {
+        self.finishBlock(self.weakApi);
+    }
 }
 
 - (BOOL)isErrorIgnored {
@@ -593,8 +583,7 @@ static const char * kTCCancelHttpTaskKey;
     if (!tempCode.isNonEmpty && [_error isKindOfClass:NSError.class]) {
         tempCode = [@(_error.code) stringValue];
     }
-    NSArray *codes = self.ignoreErrToastCodeArray.count ? self.ignoreErrToastCodeArray : [self ignoreErrToastCodes];
-    if (tempCode.isNonEmpty && [self isContainsCode:tempCode arr:codes]) {
+    if (tempCode.isNonEmpty && [self isContainsCode:tempCode arr:self.ignoreErrToastCodeArray]) {
         if (self.printLog) {
             NSLog(@"忽略了一个错误提示:  %@", tempCode);
         }
@@ -604,15 +593,8 @@ static const char * kTCCancelHttpTaskKey;
 }
 
 - (void)stopLoading {
-    if (self.loadOnView) {
-        [self mainThreadExe:^{
-            if (![self hideCustomTost:self.loadOnView]) {
-                [self.loadOnView toastHide];
-            }
-        }];
-    }
+    [self toastOnView:self.loadOnView text:self.loadingText action:TCToast_Hide];
 }
-
 
 - (NSMutableDictionary *)storeTaskDictionary {
     static NSMutableDictionary *taskDictionary = nil;
@@ -714,20 +696,24 @@ static const char * kTCCancelHttpTaskKey;
     }
     NSError *err = [self checkHttpCanRequest];
     if (err) {
-        [self handleError:err];
+        [self finishBackThreadExe:^{
+            [self handleError:err];
+        }];
         return;
     }
     
     //处理请求参数
     if (!self.params) {
-        self.params = [NSMutableDictionary dictionary];
+        self->_params = [NSMutableDictionary dictionary];
     }
     NSObject *postParams = [self.params mutableCopy];
     [self configRequestParams:postParams];
 
     err = [self checkLimitRequestWithParams:(id)postParams];
     if (err) {
-        [self handleError:err];
+        [self finishBackThreadExe:^{
+            [self handleError:err];
+        }];
         return;
     }
     NSURLSessionDataTask *cancelTask = nil;
@@ -752,7 +738,7 @@ static const char * kTCCancelHttpTaskKey;
         };
         void (^failure)(NSURLSessionDataTask *, NSError *) = ^(NSURLSessionDataTask *task, NSError *error) {
             removeCancelTask(task);
-            [self mainThreadExe:^{
+            [self finishBackThreadExe:^{
                 self->_error = error;
                 NSError *err = nil;
                 if (self.requestFinishBlock) {
@@ -760,11 +746,7 @@ static const char * kTCCancelHttpTaskKey;
                 } else {
                     err = [self requestFinish:self.weakApi];
                 }
-                if (err) {
-                    [self handleError:err];
-                } else {
-                    [self handleError:error];
-                }
+                [self handleError:err ? : error];
                 
                 //为了保证接口请求的完成顺序，这里需要放后面
                 NSNumber *isByTCCancel = objc_getAssociatedObject(task, &kTCCancelHttpTaskKey);
@@ -858,7 +840,9 @@ static const char * kTCCancelHttpTaskKey;
                     break;
                 default:
                     //如果method设置错误
-                    [self handleError:NSError.httpMethodError];
+                    [self finishBackThreadExe:^{
+                        [self handleError:NSError.httpMethodError];
+                    }];
                     break;
             }
         }
@@ -881,13 +865,7 @@ static const char * kTCCancelHttpTaskKey;
         }
         
         //MBProgressHUD show会耗时10毫秒左右，所以放在后面执行
-        if (self.loadOnView) {
-            [self mainThreadExe:^{
-                if (![self showCustomTostLoading:self.loadOnView]) {
-                    [self.loadOnView toastLoadingWithStyle:self.toastStyle];
-                }
-            }];
-        }
+        [self toastOnView:self.loadOnView text:self.loadingText action:TCToast_Loading];
     };
     
     if (cancelTask) {
@@ -914,7 +892,9 @@ static const char * kTCCancelHttpTaskKey;
 }
 
 - (void)dealloc {
-    [self.aspectToken remove];
+    if (self.aspectToken) {
+        [self.aspectToken remove];
+    }
 }
 
 - (void)autoCancelTask {
@@ -934,6 +914,38 @@ static const char * kTCCancelHttpTaskKey;
     }
 }
 
+- (void)finishBackThreadExe:(dispatch_block_t)block {
+    if (!block) {
+        return;
+    }
+    if (self.finishBackQueue) {
+        dispatch_async(self.finishBackQueue, ^{
+            block();
+        });
+    } else {
+        block();
+    }
+}
+
+- (void)toastOnView:(UIView *)view text:(NSString *)text action:(TCToastActionType)action {
+    if (!view) {
+        return;
+    }
+    [self mainThreadExe:^{
+        if ([self respondsToSelector:@selector(customTost:text:action:)]) {
+            [self customTost:view text:text action:action];
+        } else {
+            if (action == TCToast_Loading) {
+                [view toastLoadingWithText:text style:self.toastStyle];
+            } else if (action == TCToast_Hide) {
+                [view toastHide];
+            } else {
+                [view toastWithText:text style:self.toastStyle];
+            }
+        }
+    }];
+}
+
 - (void)mainThreadExe:(dispatch_block_t)block {
     if (!block) {
         return;
@@ -948,29 +960,7 @@ static const char * kTCCancelHttpTaskKey;
 }
 
 
-#pragma mark -----子类可重写，进行自定义设置
-
-#pragma mark --是否使用自定义toast
-- (BOOL)showCustomTost:(UIView *)errOnView text:(NSString *)errMsg {
-    return NO;
-}
-//自定义数据加载中的提示框样式
-- (BOOL)showCustomTostLoading:(UIView *)loadOnView {
-    return NO;
-}
-- (BOOL)hideCustomTost:(UIView *)loadOnView {
-    return NO;
-}
-
-
-
-- (BOOL)printLog {
-#if DEBUG
-    return YES;
-#endif
-    return NO;
-}
-
+#pragma mark -----子类可重写
 
 /// 如果对基类的HTTPManager不满意，可以自己在子类中重写
 + (AFHTTPSessionManager *)HTTPManager {
@@ -1001,41 +991,6 @@ static const char * kTCCancelHttpTaskKey;
 }
 
 - (void)configRequestHeaders:(NSMutableDictionary *)headers {
-}
-
-
-//以下是默认配置，子类可重写
-- (NSString *)codeKey {
-    return kDCodeKey;
-}
-
-- (NSString *)msgKey {
-    return kDMsgKey;
-}
-
-- (NSString *)timeKey {
-    return kDTimeKey;
-}
-
-- (NSString *)dataObjectKey {
-    return kDDataKey;
-}
-
-- (NSString *)otherObjectKey {
-    return kDOtherKey;
-}
-
-- (NSArray *)successCodes {
-    return @[@"1",@"ok",@"yes",@"success"];
-}
-
-- (NSArray *)ignoreErrToastCodes {
-    //取消请求的错误码是-999
-    return @[@(APIErrorCode_HttpCancel)];
-}
-
-- (Class)propertyExtensionClass {
-    return nil;
 }
 
 - (id)deformResponse:(id)oResponse {

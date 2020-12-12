@@ -9,6 +9,7 @@
 #import "NSString+TCHelp.h"
 #import "NSError+TCHelp.h"
 #import "TCNetworkHelp.h"
+#import "TCBaseApi.h"
 
 @implementation TCParseResult
 
@@ -155,6 +156,12 @@
         return;
     }
 
+    if (self.apiDelegate && [self.apiDelegate respondsToSelector:@selector(customParse:clazz:isArray:err:)]) {
+        _parseResult = [self.apiDelegate customParse:resultDic clazz:self.parseModelClass isArray:isParseArray err:&err];
+        _error = err;
+        return;
+    }
+    
     //通过TCJSONModel中的NSObject+TCJSONModel分类的__isCustomClass方法，判断传入的parseModelClass是否是自定义model
     SEL isCustomClassSel = NSSelectorFromString(@"__isCustomClass:");;
     if ([self respondsToSelector:isCustomClassSel]) {

@@ -31,12 +31,19 @@ typedef NS_ENUM(NSUInteger, TCHttpCancelType) {
     TCCancelByURLAndParams,     //相同的url，并且参数相同，重复请求时，未完成的请求将被取消
 };
 
-typedef NS_ENUM(NSUInteger, TCApiCallType) {
+typedef NS_ENUM(NSUInteger, TCApiMultiCallType) {
     TCApiCall_Default,//apiCall
     TCApiCall_Original,//apiCallOriginal
-    TCApiCall_Success//apiCallSuccess
 };
 
+typedef NS_ENUM(NSUInteger, TCToastActionType) {
+    TCToast_Error = 0,//显示提示信息
+    TCToast_Loading,//显示loading菊花
+    TCToast_Hide,//隐藏loading
+};
+
+
+typedef void (^ConfigBlock) (id api);
 typedef void (^FinishBlock) (id api);
 typedef NSError * (^InterceptorBlock) (id api);  //接口返回成功数据处理拦截器
 
@@ -48,13 +55,69 @@ typedef void (^ConfigHttpHeaderBlock) (NSMutableDictionary *headers);
 
 typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原始数据进行特殊处理
 
-/// 执行http请求的基类，使用时，请继承该类
-@interface TCBaseApi : NSObject
 
-///http请求的url
+@protocol TCBaseApiCompatible <NSObject>
+
+@optional
+
+/// 实现该协议后，将使用自定义的toast
+- (void)customTost:(UIView *)onView text:(NSString *)msg action:(TCToastActionType)type;
+
+/// 实现该协议后，将使用自定义解析方式
+- (id)customParse:(id)source clazz:(Class)modelClass isArray:(BOOL)isArray err:(NSError **)err;
+
+@end
+
+
+/// 执行http请求的基类，使用时，请继承该类
+@interface TCBaseApi : NSObject<TCBaseApiCompatible>
+
+///MARK: - 解析参数配置
+
+@property (nonatomic,copy) NSString *codeKey;
+@property (nonatomic,copy) NSString *msgKey;
+@property (nonatomic,copy) NSString *timeKey;
+@property (nonatomic,copy) NSString *dataObjectKey;
+@property (nonatomic,copy) NSString *otherObjectKey;
+
+/// 自定义判定成功结果的code数组
+@property (nonatomic,copy) NSArray *successCodeArray;
+/// 忽略错误提示信息的code数组，某些请求失败后，不想toast显示提示信息
+@property (nonatomic,copy) NSArray *ignoreErrToastCodeArray;
+
+/// 在TCBaseApi的子类中扩展属性，当对response进行解析时，会对扩展的属性进行赋值。
+/// 设置的class必须是当前self本身的class或其父类，且是TCBaseApi的子类，建议使用自己创建的继承于TCBaseApi的基类。不要扩展TCBaseApi已有的属性
+@property (nonatomic,assign) Class propertyExtensionClass;
+
+
+///MARK: - 接口调用参数配置
+///
+/// http请求的url
 @property (nonatomic,copy,readonly) NSString *URLFull;
-///一般为http请求的调用者，作用：对象销毁后，其中的所有http请求都会自动取消
+/// 执行http请求时传的参数
+@property (nonatomic,strong,readonly) NSObject *params;
+/// 一般为http请求的调用者，作用：对象销毁后，其中的所有http请求都会自动取消
 @property (nonatomic,weak,readonly) id delegate;
+
+@property (nonatomic,weak) UIView *loadOnView;//显示loading提示的容器
+@property (nonatomic,copy) NSString *loadingText;//loading的text提示信息
+@property (nonatomic,weak) UIView *errOnView;//显示错误信息的toast容器
+
+/// 默认情况只在debug模式下打印日志
+@property (nonatomic,assign) BOOL printLog;
+
+/// 如果TCBaseApi中默认的HTTPManager不能满足需求，可以自定义httpManager，优先级高于[TCBaseApi HTTPManager]
+@property (nonatomic,strong) AFHTTPSessionManager *customHttpManager;
+
+@property (nonatomic,assign) TCHttpMethod httpMethod;//HTTP请求的method，默认post,因为post最常用
+@property (nonatomic,assign) NSTimeInterval limitRequestInterval;//限制相同请求的间隔时间
+@property (nonatomic,assign) TCHttpCancelType cancelRequestType;//自动取消http请求的条件类型，默认不自动取消
+@property (nonatomic,assign) TCApiMultiCallType apiCallType;//多请求同步调用时，提前设置的apiCall方式
+@property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色
+
+@property (nonatomic,strong) dispatch_queue_t finishBackQueue;//结果处理完毕后，通过block返回到调用者时所使用的线程队列
+
+///MARK: - 接口调用后的返回信息
 
 /// 执行http请求的task
 @property (nonatomic,readonly) NSURLSessionDataTask *httpTask;
@@ -90,6 +153,7 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 //MARK:- 链式方式设置参数
 
 //MARK:- 初始化
+
 /// 初始化，传入拼接好的url
 +(TCBaseApi * (^)(NSString *))apiInitURLFull;
 
@@ -97,6 +161,7 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 +(TCBaseApi * (^)(NSString *,...))apiInitURLJoin;
 
 //MARK:- toastView相关设置
+
 ///承载loading的view，同时也是承载错误信息tosat的view
 -(TCBaseApi * (^)(UIView *))l_loadOnView;
 
@@ -104,6 +169,7 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 /// 注意：当在子线程中调用api请求时，如果需要传递ViewController的self.view时，该self.view需要在主线程中调用，
 ///      拿到对应的view后再传递参数，具体原因，请看ViewController的view属性相关的官方介绍
 -(TCBaseApi * (^)(UIView *, UIView *))l_loadOnView_errOnView;
+-(TCBaseApi * (^)(UIView *, UIView *, NSString *))l_loadOnView_errOnView_loadingText;
 
 /// toast提示框的颜色样式，默认随暗黑模式切换
 -(TCBaseApi * (^)(TCToastStyle))l_toastStyle;
@@ -181,25 +247,19 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 //MARK:- 多请求同步执行，同步返回
 
 //执行api请求的方式，不设置时，默认：TCApiCall_Default，即最终调用apiCall
--(TCBaseApi * (^)(TCApiCallType))l_apiCallType;
+-(TCBaseApi * (^)(TCApiMultiCallType))l_apiCallType;
 
 //多请求同步执行，结果同步返回。目前apiCall方式设置只支持TCApiCall_Default,TCApiCall_Original
 + (void)multiCallApis:(NSArray<TCBaseApi*> *)apis finish:(void(^)(NSArray<TCBaseApi*> *))finish;
 
 
-//MARK:- Extensions  以下方法，是为了支持以非继承的方式来使用TCBaseApi
+//MARK:- Extensions
 
-/// 用来解析code，msg，time，dataObject，otherObject
-/// 优先级高于codeKey，msgKey，timeKey，dataObjectKey，otherObjectKey方法
-/// 注意：parseKeyMap中的key应该是：kDCodeKey，kDMsgKey，kDTimeKey，kDDataKey，kDOtherKey,其他的无效
-/// 不想通过子类来重写codeKey，msgKey，dataObjectKey等方法时，可以用该方法来设置对应的key
--(TCBaseApi * (^)(NSDictionary *))l_parseKeyMap;
-
-/// 自定义判定成功结果的code数组，优先级高于successCodes方法
+/// 自定义判定成功结果的code数组
 /// 作用：当你把多个接口写在同一个接口类里面的时候，各个接口可能有不同的判断成功的code
 -(TCBaseApi * (^)(NSArray *))l_successCodeArray;
 
-/// 忽略错误提示的code数组，优先级高于ignoreErrToastCodes方法
+/// 忽略错误提示的code数组
 /// 不想通过子类来重写ignoreErrToastCodes方法时，可以用该方法来设置忽略错误提示的code
 -(TCBaseApi * (^)(NSArray *))l_ignoreErrToastCodeArray;
 
@@ -217,7 +277,9 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 -(TCBaseApi * (^)(AFHTTPSessionManager *))l_customHttpManager;
 
 
-//MARK:-
+//MARK:-  自定义api的相关配置
+///可多次调用，即会执行多次
+-(TCBaseApi * (^)(ConfigBlock))l_customConfigBlock;
 
 
 //MARK:- 请求完毕后可调用的实例方法
@@ -233,23 +295,15 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 
 //MARK:- 子类可重写
 
-/// 不重写的话，使用默认样式
-- (BOOL)showCustomTost:(UIView *)errOnView text:(NSString *)errMsg;
-/// 自定义数据加载中的提示框样式
-- (BOOL)showCustomTostLoading:(UIView *)loadOnView;
-/// 隐藏Loading提示框
-- (BOOL)hideCustomTost:(UIView *)loadOnView;
+/// 自定义调用请求之前的配置，初始化api之后会被立即调用
+/// 通常需要重写，用来设置你的解析的key:codeKey|msgKey|dataObjectKey等等配置
+- (void)apiCustomConfig;
 
-
-/// 默认情况只在debug模式下打印日志，可在子类中重写此方法，来控制日志的打印
-- (BOOL)printLog;
 
 /// 发起请求前，检查是否有请求权限，比如没有网络等情况下，可以不进行请求，可子类重写进行控制
 - (NSError *)checkHttpCanRequest;
 
 
-
-/// 通常情况下需要重写
 /// TCBaseApi中的HTTPManager是单例，如果不同接口需要对manager进行差异化配置时，注意正确设置manager在不同接口下对应的配置
 /// 提示：当同时上传多张图片或其他文件时，可能需要设置更长的超时时间
 /// @param manager manager单例
@@ -266,29 +320,6 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 /// 也可以继续沿用旧版本对manager进行设置headers，复写configHttpManager:方法进行设置
 /// @param headers request请求的headers设置
 - (void)configRequestHeaders:(NSMutableDictionary *)headers;
-
-
-/// 以下方法，子类重写，以便适配自己的后台返回的数据
-- (NSString *)codeKey;
-
-- (NSString *)msgKey;
-
-- (NSString *)timeKey;
-
-- (NSString *)dataObjectKey;
-
-- (NSString *)otherObjectKey;
-
-
-///自定义判定成功结果的code数组,优先级低于l_successCodeArray(successCodeArray)
-- (NSArray *)successCodes;
-
-///忽略错误提示信息的code数组，某些请求失败后，不想toast显示提示信息
-- (NSArray *)ignoreErrToastCodes;
-
-/// 在TCBaseApi的子类中扩展属性，当对response进行解析时，会对扩展的属性进行赋值。
-/// 设置的class必须是当前self本身的class或其父类，且是TCBaseApi的子类，建议使用自己创建的继承于TCBaseApi的基类。不要扩展TCBaseApi已有的属性。
-- (Class)propertyExtensionClass;
 
 
 /// 将http请求返回的原始数据进行变形处理，然后再进行解析

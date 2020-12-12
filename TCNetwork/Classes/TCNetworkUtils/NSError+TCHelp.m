@@ -41,7 +41,6 @@
 + (NSError *)responseResultError:(NSString *)code msg:(NSString *)msg {
     NSError *error = [NSError errorWithDomain:@"TCFailureResultUndesirability" code:code.integerValue userInfo:@{NSLocalizedDescriptionKey:msg?:@"Undesirability result"}];
     return error;
-
 }
 
 + (NSError *)errorCode:(NSString *)code msg:(NSString *)msg {
