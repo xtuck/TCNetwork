@@ -62,6 +62,12 @@
     };
 }
 
++ (NSString * (^)(NSDictionary *))urlJoinDic {
+    return ^(NSDictionary *dic){
+        return @"".urlJoinDic(dic);
+    };
+}
+
 - (NSString * (^)(NSString *))l_joinURL {
     return ^(NSString *suffix){
         return [self jointUrlSuffix:suffix];

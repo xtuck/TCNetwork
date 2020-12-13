@@ -31,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 //url拼接字典参数，需要确保调用者str不为nil
 - (NSString * (^)(NSDictionary *))urlJoinDic;
++ (NSString * (^)(NSDictionary *))urlJoinDic;
 
 //******* pathWithComponents 方法拼接的url，会把url中的双斜杠变成单斜杠，但是不影响请求数据 *******//
 
