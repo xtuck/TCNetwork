@@ -54,13 +54,13 @@ static const char * kTCCancelHttpTaskKey;
     self.weakApi = weakApi;
     self.toastStyle = UIView.getDefaultStyle;
     self.finishBackQueue = dispatch_get_main_queue();
-    self.codeKey = kDCodeKey;
-    self.msgKey = kDMsgKey;
-    self.timeKey = kDTimeKey;
-    self.dataObjectKey = kDDataKey;
-    self.otherObjectKey = kDOtherKey;
-    self.successCodeArray = @[@"1",@"ok",@"yes",@"success"];
-    self.ignoreErrToastCodeArray = @[@(APIErrorCode_HttpCancel)];//取消请求的错误码是-999
+    self.parseCodeKey = [self codeKey];
+    self.parseMsgKey = [self msgKey];
+    self.parseTimeKey = [self timeKey];;
+    self.parseDataObjectKey = [self dataObjectKey];;
+    self.parseOtherObjectKey = [self otherObjectKey];
+    self.successCodeArray = [self successCodes];
+    self.ignoreErrToastCodeArray = [self ignoreErrToastCodes];
 #if DEBUG
     self.printLog = YES;
 #endif
@@ -468,24 +468,24 @@ static const char * kTCCancelHttpTaskKey;
         free(propertyList);
     }
 
-    if (self.codeKey.isNonEmpty) {
-        _code = response[self.codeKey];
+    if (self.parseCodeKey.isNonEmpty) {
+        _code = response[self.parseCodeKey];
     }
     if ([_code isKindOfClass:NSNumber.class]) {
         //为了统一格式
         _code = [(NSNumber *)_code stringValue];
     }
-    if (self.msgKey.isNonEmpty) {
-        _msg = response[self.msgKey];
+    if (self.parseMsgKey.isNonEmpty) {
+        _msg = response[self.parseMsgKey];
     }
-    if (self.timeKey.isNonEmpty) {
-        _time = response[self.timeKey];
+    if (self.parseTimeKey.isNonEmpty) {
+        _time = response[self.parseTimeKey];
     }
-    if (self.dataObjectKey.isNonEmpty) {
-        _dataObject = response[self.dataObjectKey];
+    if (self.parseDataObjectKey.isNonEmpty) {
+        _dataObject = response[self.parseDataObjectKey];
     }
-    if (self.otherObjectKey.isNonEmpty) {
-        _otherObject = response[self.otherObjectKey];
+    if (self.parseOtherObjectKey.isNonEmpty) {
+        _otherObject = response[self.parseOtherObjectKey];
     }
 
     //model解析
@@ -991,6 +991,41 @@ static const char * kTCCancelHttpTaskKey;
 }
 
 - (void)configRequestHeaders:(NSMutableDictionary *)headers {
+}
+
+
+//以下是默认配置，子类可重写
+- (NSString *)codeKey {
+    return kDCodeKey;
+}
+
+- (NSString *)msgKey {
+    return kDMsgKey;
+}
+
+- (NSString *)timeKey {
+    return kDTimeKey;
+}
+
+- (NSString *)dataObjectKey {
+    return kDDataKey;
+}
+
+- (NSString *)otherObjectKey {
+    return kDOtherKey;
+}
+
+- (NSArray *)successCodes {
+    return @[@"1",@"ok",@"yes",@"success"];
+}
+
+- (NSArray *)ignoreErrToastCodes {
+    //取消请求的错误码是-999
+    return @[@(APIErrorCode_HttpCancel)];
+}
+
+- (Class)propertyExtensionClass {
+    return nil;
 }
 
 - (id)deformResponse:(id)oResponse {

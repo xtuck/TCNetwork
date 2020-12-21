@@ -73,31 +73,26 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 @interface TCBaseApi : NSObject<TCBaseApiCompatible>
 
 ///MARK: - 解析参数配置
+@property (nonatomic,copy) NSString *parseCodeKey;
+@property (nonatomic,copy) NSString *parseMsgKey;
+@property (nonatomic,copy) NSString *parseTimeKey;
+@property (nonatomic,copy) NSString *parseDataObjectKey;
+@property (nonatomic,copy) NSString *parseOtherObjectKey;
 
-@property (nonatomic,copy) NSString *codeKey;
-@property (nonatomic,copy) NSString *msgKey;
-@property (nonatomic,copy) NSString *timeKey;
-@property (nonatomic,copy) NSString *dataObjectKey;
-@property (nonatomic,copy) NSString *otherObjectKey;
-
+///MARK: - code判定配置
 /// 自定义判定成功结果的code数组
 @property (nonatomic,copy) NSArray *successCodeArray;
-/// 忽略错误提示信息的code数组，某些请求失败后，不想toast显示提示信息
+/// 忽视掉的错误code数组
 @property (nonatomic,copy) NSArray *ignoreErrToastCodeArray;
-
-/// 在TCBaseApi的子类中扩展属性，当对response进行解析时，会对扩展的属性进行赋值。
-/// 设置的class必须是当前self本身的class或其父类，且是TCBaseApi的子类，建议使用自己创建的继承于TCBaseApi的基类。不要扩展TCBaseApi已有的属性
-@property (nonatomic,assign) Class propertyExtensionClass;
-
 
 ///MARK: - 接口调用参数配置
 ///
 /// http请求的url
-@property (nonatomic,copy,readonly) NSString *URLFull;
+@property (nonatomic,copy) NSString *URLFull;
 /// 执行http请求时传的参数
-@property (nonatomic,strong,readonly) NSObject *params;
+@property (nonatomic,strong) NSObject *params;
 /// 一般为http请求的调用者，作用：对象销毁后，其中的所有http请求都会自动取消
-@property (nonatomic,weak,readonly) id delegate;
+@property (nonatomic,weak) id delegate;
 
 @property (nonatomic,weak) UIView *loadOnView;//显示loading提示的容器
 @property (nonatomic,copy) NSString *loadingText;//loading的text提示信息
@@ -113,7 +108,7 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 @property (nonatomic,assign) NSTimeInterval limitRequestInterval;//限制相同请求的间隔时间
 @property (nonatomic,assign) TCHttpCancelType cancelRequestType;//自动取消http请求的条件类型，默认不自动取消
 @property (nonatomic,assign) TCApiMultiCallType apiCallType;//多请求同步调用时，提前设置的apiCall方式
-@property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色
+@property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色样式
 
 @property (nonatomic,strong) dispatch_queue_t finishBackQueue;//结果处理完毕后，通过block返回到调用者时所使用的线程队列
 
@@ -320,6 +315,29 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 /// 也可以继续沿用旧版本对manager进行设置headers，复写configHttpManager:方法进行设置
 /// @param headers request请求的headers设置
 - (void)configRequestHeaders:(NSMutableDictionary *)headers;
+
+
+/// 以下方法，子类重写，以便适配自己的后台返回的数据
+- (NSString *)codeKey;
+
+- (NSString *)msgKey;
+
+- (NSString *)timeKey;
+
+- (NSString *)dataObjectKey;
+
+- (NSString *)otherObjectKey;
+
+
+///自定义判定成功结果的code数组,优先级低于l_successCodeArray(successCodeArray)
+- (NSArray *)successCodes;
+
+///忽略错误提示信息的code数组，某些请求失败后，不想toast显示提示信息
+- (NSArray *)ignoreErrToastCodes;
+
+/// 在TCBaseApi的子类中扩展属性，当对response进行解析时，会对扩展的属性进行赋值。
+/// 设置的class必须是当前self本身的class或其父类，且是TCBaseApi的子类，建议使用自己创建的继承于TCBaseApi的基类。
+- (Class)propertyExtensionClass;
 
 
 /// 将http请求返回的原始数据进行变形处理，然后再进行解析
