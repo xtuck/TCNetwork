@@ -33,13 +33,13 @@
 
 - (NSString *)toUrlCharacters {
     NSString *urlStr = [self copy];
-    urlStr = [self stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
+    urlStr = [urlStr stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
     return urlStr;
 }
 
 - (NSString *)undoUrlCharacters {
     NSString *urlStr = [self copy];
-    urlStr = [self stringByRemovingPercentEncoding];
+    urlStr = [urlStr stringByRemovingPercentEncoding];
     return urlStr;
 }
 
