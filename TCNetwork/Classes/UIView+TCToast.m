@@ -109,19 +109,19 @@ static TCToastStyle dfStyle;
 }
 
 
-- (void)toastWithText:(NSString *)text {
-    [self toastWithText:text style:dfStyle];
+- (MBProgressHUD *)toastWithText:(NSString *)text {
+    return [self toastWithText:text style:dfStyle];
 }
 
-- (void)toastWithText:(NSString *)text style:(TCToastStyle)style {
-    [self toastWithText:text hideAfterDelay:kToastDuration style:style];
+- (MBProgressHUD *)toastWithText:(NSString *)text style:(TCToastStyle)style {
+    return [self toastWithText:text hideAfterDelay:kToastDuration style:style];
 }
 
-- (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay {
-    [self toastWithText:text hideAfterDelay:delay style:dfStyle];
+- (MBProgressHUD *)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay {
+    return [self toastWithText:text hideAfterDelay:delay style:dfStyle];
 }
 
-- (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay style:(TCToastStyle)style {
+- (MBProgressHUD *)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay style:(TCToastStyle)style {
     MBProgressHUD *hud = nil;
     if (![self isEmptyStr:text]) {
         hud = [MBProgressHUD showHUDAddedTo:self animated:YES];
@@ -133,21 +133,22 @@ static TCToastStyle dfStyle;
         hud.isHudDelayHide = YES;
     }
     [self configHud:hud style:style];
+    return hud;
 }
 
-- (void)toastLoading {
-    [self toastLoadingWithStyle:dfStyle];
+- (MBProgressHUD *)toastLoading {
+    return [self toastLoadingWithStyle:dfStyle];
 }
 
-- (void)toastLoadingWithStyle:(TCToastStyle)style {
-    [self toastLoadingWithText:nil style:style];
+- (MBProgressHUD *)toastLoadingWithStyle:(TCToastStyle)style {
+    return [self toastLoadingWithText:nil style:style];
 }
 
-- (void)toastLoadingWithText:(NSString *)text {
-    [self toastLoadingWithText:text style:dfStyle];
+- (MBProgressHUD *)toastLoadingWithText:(NSString *)text {
+    return [self toastLoadingWithText:text style:dfStyle];
 }
 
-- (void)toastLoadingWithText:(NSString *)text style:(TCToastStyle)style {
+- (MBProgressHUD *)toastLoadingWithText:(NSString *)text style:(TCToastStyle)style {
     self.currentLoadingText = text;
     self.currentLoadingStyle = style;
     self.toastLoadingCount = self.toastLoadingCount+1;
@@ -162,6 +163,7 @@ static TCToastStyle dfStyle;
         }
     }
     [self configHud:hud style:style];
+    return hud;
 }
 
 - (void)configHud:(MBProgressHUD *)hud style:(TCToastStyle)style {
@@ -189,13 +191,13 @@ static TCToastStyle dfStyle;
     }
 
     self.isToastLoading = NO;
+    self.toastLoadingCount = 0;
     //[MBProgressHUD hideHUDForView:self animated:YES];
     for (UIView *subview in self.subviews) {
         if ([subview isKindOfClass:MBProgressHUD.class]) {
             MBProgressHUD *hud = (MBProgressHUD *)subview;
             if (!hud.isHudDelayHide) {
                 [hud hideAnimated:YES];
-                self.toastLoadingCount = 0;
             }
         }
     }
@@ -215,25 +217,26 @@ static TCToastStyle dfStyle;
 }
 
 + (UIView *)currentView {
-    UIViewController *controller = [[[UIApplication sharedApplication] keyWindow] rootViewController];
-    UIViewController *currentVC = [self getCurrentVCFrom:controller];
-    return currentVC.view;
+    return self.currentVC.view;
+}
+
++ (UIViewController *)currentVC {
+    return [self getCurrentVCFrom:nil];
 }
 
 + (UIViewController *)getCurrentVCFrom:(UIViewController *)rootVC {
+    if (!rootVC) {
+        rootVC = [[[UIApplication sharedApplication] keyWindow] rootViewController];
+    }
     UIViewController *currentVC;
-    if([rootVC presentedViewController]) {
-        // 视图是被presented出来的
+    if ([rootVC presentedViewController]) {
         rootVC = [rootVC presentedViewController];
     }
-    if([rootVC isKindOfClass:[UITabBarController class]]) {
-        // 根视图为UITabBarController
+    if ([rootVC isKindOfClass:[UITabBarController class]]) {
         currentVC = [self getCurrentVCFrom:[(UITabBarController *)rootVC selectedViewController]];
-    }else if([rootVC isKindOfClass:[UINavigationController class]]){
-        // 根视图为UINavigationController
+    } else if ([rootVC isKindOfClass:[UINavigationController class]]){
         currentVC = [self getCurrentVCFrom:[(UINavigationController *)rootVC visibleViewController]];
-    }else{
-        // 根视图为非导航类
+    } else {
         currentVC = rootVC;
     }
     return currentVC;

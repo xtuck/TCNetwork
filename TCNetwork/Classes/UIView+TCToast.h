@@ -38,18 +38,18 @@ typedef NS_ENUM(NSUInteger, TCToastStyle) {
 @property(nonatomic,weak,readonly) UIView *catcherView;//接球手
 - (UIView *)loadingThrower:(UIView *)previousView;//移形换影
 
-- (void)toastWithText:(NSString *)text;
-- (void)toastWithText:(NSString *)text style:(TCToastStyle)style;
+- (MBProgressHUD *)toastWithText:(NSString *)text;
+- (MBProgressHUD *)toastWithText:(NSString *)text style:(TCToastStyle)style;
 
-- (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay;
-- (void)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay style:(TCToastStyle)style;
+- (MBProgressHUD *)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay;
+- (MBProgressHUD *)toastWithText:(NSString *)text hideAfterDelay:(NSTimeInterval)delay style:(TCToastStyle)style;
 
 
-- (void)toastLoading;
-- (void)toastLoadingWithStyle:(TCToastStyle)style;
+- (MBProgressHUD *)toastLoading;
+- (MBProgressHUD *)toastLoadingWithStyle:(TCToastStyle)style;
 
-- (void)toastLoadingWithText:(NSString *)text;
-- (void)toastLoadingWithText:(NSString *)text style:(TCToastStyle)style;
+- (MBProgressHUD *)toastLoadingWithText:(NSString *)text;
+- (MBProgressHUD *)toastLoadingWithText:(NSString *)text style:(TCToastStyle)style;
 
 - (void)toastHide;
 
@@ -59,5 +59,7 @@ typedef NS_ENUM(NSUInteger, TCToastStyle) {
 + (UIView *)appWindow;
 
 + (UIView *)currentView;
+
++ (UIViewController *)currentVC;
 
 @end
