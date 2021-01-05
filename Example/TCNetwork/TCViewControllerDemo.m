@@ -36,6 +36,8 @@
     NSLog(@"测试自动取消http请求");
     //请查看控制台日志
     [CheckVersionApi checkVersion].l_delegate(self).l_loadOnView(UIView.appWindow).apiCall(nil);
+    [CheckVersionApi checkVersion].l_delegate(self).l_loadOnView(UIView.appWindow).apiCall(nil);
+    [CheckVersionApi checkVersion].l_delegate(self).l_loadOnView(UIView.appWindow).apiCall(nil);
 }
 
 - (void)dealloc {

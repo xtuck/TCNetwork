@@ -10,7 +10,7 @@
 #import "CocoaSecurity.h"
 
 
-#pragma mark - 字符串参数也可以写在自己的其他独立的配置文件中，便于统一管理维护。不需要重写的方法，可以不写
+#pragma mark - baseUrl也可以写在自己的其他独立的配置文件中，便于统一管理维护。不需要重写的方法，可以不写
 
 @implementation MyBaseApi
 
@@ -37,7 +37,6 @@
 
 
 - (void)configHttpManager:(AFHTTPSessionManager *)manager {
-    manager.requestSerializer.timeoutInterval = 10;
 }
 
 - (void)configRequestParams:(NSObject *)params {
@@ -48,20 +47,6 @@
 
 - (BOOL)printLog {
     return [super printLog];
-}
-
-
-//以下三个方法：如果自定义toast，请return YES
-
-- (BOOL)showCustomTost:(UIView *)errOnView text:(NSString *)errMsg {
-    return NO;
-}
-
-- (BOOL)showCustomTostLoading:(UIView *)loadOnView {
-    return NO;
-}
-- (BOOL)hideCustomTost:(UIView *)loadOnView {
-    return NO;
 }
 
 

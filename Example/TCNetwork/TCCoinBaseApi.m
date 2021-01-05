@@ -42,7 +42,8 @@ static NSString * const kLoginExpiredCode = @"201";
 
 - (void)configRequestHeaders:(NSMutableDictionary *)headers {
     [super configRequestHeaders:headers];
-    [headers setValue:kUserInfo.token forKey:@"Authorization"];
+    //"token"是登录接口返回的的数据
+    [headers setValue:@"<token>" forKey:@"Authorization"];
 }
 
 - (NSArray *)ignoreErrToastCodes {
@@ -58,5 +59,30 @@ static NSString * const kLoginExpiredCode = @"201";
     //可以重新创建error，也可以继续用api.error
     return api.error;
 }
+
+#ifdef DEBUG
+//实现下面方法，可以自定义toast样式，实现代码可以自己写，可以使用其他第三方库的toast库
+- (void)customTost:(UIView *)onView text:(NSString *)msg action:(TCToastActionType)type {
+    if (type==TCToast_Hide) {
+        [onView toastHide];
+    } else {
+        MBProgressHUD *hud = nil;
+        if (type == TCToast_Error) {
+            hud = [onView toastWithText:msg];
+        } else {
+            hud = [onView toastLoadingWithText:msg];
+        }
+        hud.bezelView.blurEffectStyle = UIBlurEffectStyleLight;
+        hud.contentColor = [UIColor systemPinkColor];
+    }
+}
+
+//实现下面方法，可以使用其他的字典转model的第三方库，返回解析结果给api对象
+//- (id)customParse:(id)source clazz:(Class)modelClass isArray:(BOOL)isArray err:(NSError **)err {
+//    return nil;
+//}
+
+#endif
+
 
 @end

@@ -22,10 +22,6 @@
     self.view.backgroundColor = [UIColor lightGrayColor];
     [self.view toastWithText:@"即将自动登录" hideAfterDelay:2];
         
-        NSString *pre = @"";
-        pre.l_joinURL(@"111");
-        
-
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         //block里面使用weakSelf，避免对象延迟释放
         //作用：比如，在弱网环境下，请求结果还未返回，就返回了上级页面，那么当前页面应该立即销毁，不应该被延迟释放

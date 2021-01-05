@@ -11,14 +11,11 @@
 @implementation CoinLoginApi
 
 
-+ (NSString *)baseUrl {
-   return @"http://xxxxxxxxxxxxxxxxx";
-}
-
 - (void)configHttpManager:(AFHTTPSessionManager *)manager {
     [super configHttpManager:manager];
     //发送请求的格式为json text格式
     manager.requestSerializer = [AFJSONRequestSerializer serializer];
+    manager.requestSerializer.timeoutInterval = 10;
 }
 
 - (void)configRequestHeaders:(NSMutableDictionary *)headers {
@@ -31,7 +28,7 @@
     NSMutableDictionary *param = NSMutableDictionary.maker;
     param.addKV(@"mobile",username);
     param.addKV(@"password",pwd);
-    return self.apiInitURLJoin(self.baseUrl,@"contract/auth/login",nil).l_params(param).l_loadOnView(UIView.appWindow);
+    return self.apiInitURLJoin(@"http://xxxxxxxx",@"contract/auth/login",nil).l_params(param).l_loadOnView(UIView.appWindow);
 }
 
 @end

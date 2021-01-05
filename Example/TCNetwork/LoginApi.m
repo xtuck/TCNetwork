@@ -37,6 +37,7 @@
     [super configHttpManager:manager];
     //发送请求的格式为form格式,也是默认的序列化器
     manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+    manager.requestSerializer.timeoutInterval = 10;
 }
 
 - (void)configRequestHeaders:(NSMutableDictionary *)headers {

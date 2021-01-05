@@ -29,6 +29,8 @@
 		960F7FF32486243000333B1F /* LoginApi.m in Sources */ = {isa = PBXBuildFile; fileRef = 960F7FF22486243000333B1F /* LoginApi.m */; };
 		960F7FF62486A3A900333B1F /* TCViewControllerDemo.m in Sources */ = {isa = PBXBuildFile; fileRef = 960F7FF52486A3A900333B1F /* TCViewControllerDemo.m */; };
 		960F7FFC2486E97A00333B1F /* CoinLoginApi.m in Sources */ = {isa = PBXBuildFile; fileRef = 960F7FFB2486E97A00333B1F /* CoinLoginApi.m */; };
+		9638474325A4A1D200D2D08B /* TCCoinBaseApi.m in Sources */ = {isa = PBXBuildFile; fileRef = 96EE8F4F24C5849800D6174E /* TCCoinBaseApi.m */; };
+		9638474625A4A1D500D2D08B /* TCTargetConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = 96EE8F5224C589E800D6174E /* TCTargetConfig.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -316,7 +318,7 @@
 				ORGANIZATIONNAME = xtuck;
 				TargetAttributes = {
 					6003F589195388D20070C39A = {
-						DevelopmentTeam = N8KL6M5NSM;
+						DevelopmentTeam = 4AZM59DT32;
 					};
 					6003F5AD195388D20070C39A = {
 						TestTargetID = 6003F589195388D20070C39A;
@@ -445,10 +447,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				6003F59E195388D20070C39A /* TCAppDelegate.m in Sources */,
+				9638474625A4A1D500D2D08B /* TCTargetConfig.m in Sources */,
 				960F7FED2486006B00333B1F /* MyBaseApi.m in Sources */,
 				960F7FF32486243000333B1F /* LoginApi.m in Sources */,
 				6003F5A7195388D20070C39A /* TCViewController.m in Sources */,
 				960F7FF02486058E00333B1F /* CheckVersionApi.m in Sources */,
+				9638474325A4A1D200D2D08B /* TCCoinBaseApi.m in Sources */,
 				960F7FFC2486E97A00333B1F /* CoinLoginApi.m in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
 				960F7FF62486A3A900333B1F /* TCViewControllerDemo.m in Sources */,
@@ -582,7 +586,7 @@
 			baseConfigurationReference = B52268F964B31F12B25700D2 /* Pods-TCNetwork_Example.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = N8KL6M5NSM;
+				DEVELOPMENT_TEAM = 4AZM59DT32;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "TCNetwork/TCNetwork-Prefix.pch";
 				INFOPLIST_FILE = "TCNetwork/TCNetwork-Info.plist";
@@ -599,7 +603,7 @@
 			baseConfigurationReference = 83C4E69787CA7C82CA43AC1E /* Pods-TCNetwork_Example.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = N8KL6M5NSM;
+				DEVELOPMENT_TEAM = 4AZM59DT32;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "TCNetwork/TCNetwork-Prefix.pch";
 				INFOPLIST_FILE = "TCNetwork/TCNetwork-Info.plist";

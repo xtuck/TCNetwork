@@ -8,7 +8,6 @@
 
 #import "TCBaseApi.h"
 #import "TCTargetConfig.h"
-#import "NSObject+TCModel.h"
 
 @interface TCCoinBaseApi : TCBaseApi
 
