@@ -85,12 +85,14 @@ static const char * kTCCancelHttpTaskKey;
     __block NSInteger count = apis.count;
     NSMutableArray *backApis = [apis mutableCopy];//延长apis生命周期
     dispatch_block_t checkEnd = ^{
-        count--;
-        if (count<=0) {
-            if (finish) {
-                finish(backApis);
+        @synchronized (backApis) {
+            count--;
+            if (count<=0) {
+                if (finish) {
+                    finish(backApis);
+                }
+                [backApis removeAllObjects];//释放apis
             }
-            [backApis removeAllObjects];//释放apis
         }
     };
 
