@@ -25,6 +25,11 @@ typedef NS_ENUM(NSUInteger, TCHttpMethod) {
     TCHttp_PATCH,
 };
 
+typedef NS_ENUM(NSUInteger, TCRequstSerializerType) {
+    TCRequest_HTTP = 0,//AFHTTPRequestSerializer
+    TCRequest_JSON,    //AFJSONRequestSerializer
+};
+
 typedef NS_ENUM(NSUInteger, TCHttpCancelType) {
     TCCancelByNone = 0,
     TCCancelByURL,              //相同的url，重复请求时，未完成的请求将被取消
@@ -109,6 +114,8 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 @property (nonatomic,assign) TCHttpCancelType cancelRequestType;//自动取消http请求的条件类型，默认不自动取消
 @property (nonatomic,assign) TCApiMultiCallType apiCallType;//多请求同步调用时，提前设置的apiCall方式
 @property (nonatomic,assign) TCToastStyle toastStyle;//提示框颜色样式
+@property (nonatomic,assign) TCRequstSerializerType requstSerializerType;//默认TCRequest_HTTP:AFHTTPRequestSerializer
+@property (nonatomic,assign) NSTimeInterval requstTimeoutInterval;//默认(kHttpRequestTimeoutInterval=15.0)
 
 @property (nonatomic,strong) dispatch_queue_t finishBackQueue;//结果处理完毕后，通过block返回到调用者时所使用的线程队列
 
@@ -199,6 +206,11 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 
 /// 设置http请求的method,不设置的话，默认是post
 -(TCBaseApi * (^)(TCHttpMethod method))l_httpMethod;
+
+/// 设置http请求requstSerializer类型，超时时间 == kHttpRequestTimeoutInterval
+-(TCBaseApi * (^)(TCRequstSerializerType))l_requestSerializerType;
+/// 设置http请求requstSerializer类型和超时时间
+-(TCBaseApi * (^)(TCRequstSerializerType,NSTimeInterval))l_requestSerializerType_timeout;
 
 /// 限制请求的间隔时间，相同接口和相同参数，在间隔时间内重复调用时，后调用的将直接被忽略
 -(TCBaseApi * (^)(NSTimeInterval))l_limitRequestInterval;

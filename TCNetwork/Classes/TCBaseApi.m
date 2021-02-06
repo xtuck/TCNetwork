@@ -61,6 +61,8 @@ static const char * kTCCancelHttpTaskKey;
     self.parseOtherObjectKey = [self otherObjectKey];
     self.successCodeArray = [self successCodes];
     self.ignoreErrToastCodeArray = [self ignoreErrToastCodes];
+    self.requstTimeoutInterval = kHttpRequestTimeoutInterval;
+    
 #if DEBUG
     self.printLog = YES;
 #endif
@@ -238,6 +240,20 @@ static const char * kTCCancelHttpTaskKey;
 -(TCBaseApi * (^)(TCHttpMethod method))l_httpMethod {
     return ^(TCHttpMethod l_httpMethod){
         self.httpMethod = l_httpMethod;
+        return self;
+    };
+}
+
+-(TCBaseApi * (^)(TCRequstSerializerType))l_requestSerializerType {
+    return ^(TCRequstSerializerType l_requestSerializerType){
+        return self.l_requestSerializerType_timeout(l_requestSerializerType,kHttpRequestTimeoutInterval);
+    };
+}
+
+-(TCBaseApi * (^)(TCRequstSerializerType,NSTimeInterval))l_requestSerializerType_timeout {
+    return ^(TCRequstSerializerType l_requestSerializerType,NSTimeInterval timeout){
+        self.requstSerializerType = l_requestSerializerType;
+        self.requstTimeoutInterval = timeout;
         return self;
     };
 }
@@ -777,6 +793,18 @@ static const char * kTCCancelHttpTaskKey;
                 self.configHttpManagerBlock(currentHttpManager);
             } else {
                 [self configHttpManager:currentHttpManager];
+            }
+            if (self.requstSerializerType == TCRequest_HTTP) {
+                if (![currentHttpManager.requestSerializer isMemberOfClass:AFHTTPRequestSerializer.class]) {
+                    currentHttpManager.requestSerializer = [AFHTTPRequestSerializer serializer];
+                }
+            } else {
+                if (![currentHttpManager.requestSerializer isMemberOfClass:AFJSONRequestSerializer.class]) {
+                    currentHttpManager.requestSerializer = [AFJSONRequestSerializer serializer];
+                }
+            }
+            if (currentHttpManager.requestSerializer.timeoutInterval != self.requstTimeoutInterval) {
+                currentHttpManager.requestSerializer.timeoutInterval = self.requstTimeoutInterval;
             }
         }
         

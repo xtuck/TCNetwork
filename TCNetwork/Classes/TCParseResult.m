@@ -73,6 +73,25 @@
     return model;
 }
 
+//兼容处理
++ (NSDictionary *)compatibleResultDic:(NSDictionary *)dic class:(Class)clazz {
+    if (!clazz || !dic || ![dic isKindOfClass:NSString.class]) {
+        return dic;
+    }
+    //特殊处理：如果返回结果是字符串，解析的modelClass是字典或数组或者自定义model，就将字符串转为JSONObject-->NSDictionary或NSArray
+    if (([clazz isSubclassOfClass:NSArray.class]
+         || [clazz isSubclassOfClass:NSDictionary.class]
+         || [TCParseResult checkCustomClass:clazz] == 1)) {
+        NSDictionary *resDic =  [NSJSONSerialization JSONObjectWithData:[(NSString *)dic dataUsingEncoding:NSUTF8StringEncoding]
+                                                                options:kNilOptions error:nil];
+        if (resDic) {
+            [TCParseResult printDebugLog:@"指定结果为NSDictionary或者NSArray或自定义model，解析出的数据为String，已转换成JSONObject"];
+            return resDic;
+        }
+    }
+    return dic;
+}
+
 - (void)parse {
     if (!self.parseSource) {
         _error = [NSError errorCode:@"-16810" msg:@"解析数据源为空!!!"];
@@ -84,9 +103,9 @@
         _parseResult = resultDic;
         return;
     }
-    
+
     NSError *err = nil;
-    resultDic = TCParseResult.parse(resultDic,self.fullParseKey,&err);
+    resultDic = [TCParseResult parseWithSource:resultDic key:self.fullParseKey clazz:self.parseModelClass err:&err];
     if (err) {
         _error = err;
         return;
@@ -162,17 +181,10 @@
         return;
     }
     
-    //通过TCJSONModel中的NSObject+TCJSONModel分类的__isCustomClass方法，判断传入的parseModelClass是否是自定义model
-    SEL isCustomClassSel = NSSelectorFromString(@"__isCustomClass:");;
-    if ([self respondsToSelector:isCustomClassSel]) {
-        IMP imp = [self methodForSelector:isCustomClassSel];
-        BOOL (*func)(id, SEL, id) = (void *)imp;
-        BOOL isCustomClass = func(self, isCustomClassSel,self.parseModelClass);
-        if (!isCustomClass) {
-            _parseResult = resultDic;
-            [TCParseResult printDebugLog:@"传入的parseModelClass不是自定义的model，resultParseObject将赋值为原始数据"];
-            return;
-        }
+    if ([TCParseResult checkCustomClass:self.parseModelClass] == 0) {
+        _parseResult = resultDic;
+        [TCParseResult printDebugLog:@"传入的parseModelClass不是自定义的model，resultParseObject将赋值为原始数据"];
+        return;
     }
 
     SEL modelSel = nil;
@@ -192,6 +204,25 @@
     }
 }
 
+//通过TCJSONModel中的NSObject+TCJSONModel分类的__isCustomClass方法，判断传入的parseModelClass是否是自定义model
++ (int)checkCustomClass:(Class)clazz {
+    if (!clazz) {
+        return -2;
+    }
+    SEL isCustomClassSel = NSSelectorFromString(@"tc_isCustomClass:");
+    if ([NSObject respondsToSelector:isCustomClassSel]) {
+        IMP imp = [self methodForSelector:isCustomClassSel];
+        BOOL (*func)(id, SEL, id) = (void *)imp;
+        BOOL isCustomClass = func(self, isCustomClassSel,clazz);
+        if (isCustomClass) {
+            return 1;//自定义对象
+        } else {
+            return 0;//基本数据对象
+        }
+    }
+    return -1;//未导入pod 'TCJSONModel'
+}
+
 + (id (^)(id source,NSString *fullKey))lazyParse {
     return ^(id source,NSString *fullKey){
         return self.parse(source,fullKey,nil);
@@ -200,11 +231,11 @@
 
 + (id (^)(id, NSString *, NSError **))parse {
     return ^(id source,NSString *fullKey,NSError **err){
-        return [self parseWithSource:source key:fullKey err:err];
+        return [self parseWithSource:source key:fullKey clazz:nil err:err];
     };
 }
 
-+ (id)parseWithSource:(id)source key:(NSString *)fullKey err:(NSError **)err {
++ (id)parseWithSource:(id)source key:(NSString *)fullKey clazz:(Class)clazz err:(NSError **)err {
     if (!source) {
         if (err) {
             *err = [NSError errorCode:@"-16810" msg:@"解析数据源为空"];
@@ -212,19 +243,19 @@
         return nil;
     }
     if (!fullKey.isNonEmpty || [fullKey isEqualToString:kParseRoot]) {
-        return source;
+        return [self compatibleResultDic:source class:clazz];//MARK:新增
     }
     
     if ([fullKey isEqualToString:kParseArray]) {
+        source = [self compatibleResultDic:source class:clazz];//MARK:新增
         if ([source isKindOfClass:NSArray.class]) {
             return source;
-        } else {
-            if (err) {
-                NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 指定结果为数组 \n 数据源为非数组:%@",fullKey,source];
-                *err = [NSError errorCode:@"-16815" msg:errMsg];
-            }
-            return nil;
         }
+        if (err) {
+            NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 指定结果为数组 \n 数据源为非数组:%@",fullKey,source];
+            *err = [NSError errorCode:@"-16815" msg:errMsg];
+        }
+        return nil;
     }
     
     NSString *tempKey = [fullKey copy];
@@ -236,7 +267,7 @@
     }
     //tempKey = [tempKey stringByReplacingOccurrencesOfString:kParseArray withString:@"(,)"];
 
-    NSDictionary *resultDic = (id)source;
+    NSDictionary *resultDic = [self compatibleResultDic:source class:clazz];//MARK:新增
     NSMutableArray *keys = [NSMutableArray array];
     NSArray *keyArr = [tempKey componentsSeparatedByString:@"."];
     for (NSString *key in keyArr) {
@@ -252,7 +283,7 @@
         NSString *indexsKey = nil;
         if (start == NSNotFound && start2 == NSNotFound) {
             if ([resultDic isKindOfClass:NSDictionary.class]) {
-                resultDic = resultDic[pKey];
+                resultDic = [self compatibleResultDic:resultDic[pKey] class:clazz];//MARK:新增
             } else if ([resultDic isKindOfClass:NSArray.class] || [resultDic isKindOfClass:NSNull.class]){
                 //非字典数据
                 if (err) {
@@ -268,7 +299,7 @@
             NSString *pKeyNew = [pKey substringToIndex:mStart];
             if (pKeyNew.isNonEmpty) {
                 if ([resultDic isKindOfClass:NSDictionary.class]) {
-                    resultDic = resultDic[pKeyNew];
+                    resultDic = [self compatibleResultDic:resultDic[pKeyNew] class:clazz];//MARK:新增
                 } else if ([resultDic isKindOfClass:NSArray.class] || [resultDic isKindOfClass:NSNull.class]){
                     //非字典数据
                     if (err) {
@@ -340,10 +371,11 @@
                 } else {
                     resultDic = [resArray objectAtIndex:rang.location];
                 }
+                resultDic = [self compatibleResultDic:resultDic class:clazz];//MARK:新增
             }
         }
     }
-    return resultDic;
+    return [self compatibleResultDic:resultDic class:clazz];//MARK:新增;
 }
 
 
