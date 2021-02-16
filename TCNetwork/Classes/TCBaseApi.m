@@ -195,6 +195,13 @@ static const char * kTCCancelHttpTaskKey;
     };
 }
 
+-(TCBaseApi * (^)(NSObject *))l_URLParams {
+    return ^(NSObject *l_URLParams){
+        self->_URLParams = l_URLParams;
+        return self;
+    };
+}
+
 -(TCBaseApi * (^)(NSArray *))l_successCodeArray {
     return ^(NSArray *l_successCodeArray){
         self.successCodeArray = l_successCodeArray;
@@ -436,8 +443,9 @@ static const char * kTCCancelHttpTaskKey;
 - (void)handleResponse:(id)response {
     [self stopLoading];
     if (self.printLog) {
-        NSLog(@"Request end:\n Request header: %@\n method: %@\n path: %@\n params: %@\n responseObject: %@",
-              self.httpTask.originalRequest.allHTTPHeaderFields, self.httpTask.originalRequest.HTTPMethod, self.URLFull, self.params ,response);
+        NSLog(@"Request end:\n Request header: %@\n method: %@\n path: %@\n urlParams: %@\n params: %@\n responseObject: %@",
+              self.httpTask.originalRequest.allHTTPHeaderFields, self.httpTask.originalRequest.HTTPMethod,
+              self.URLFull, self.URLParams?:@"", self.params ,response);
     }
     _originalResponse = response;
     
@@ -655,7 +663,7 @@ static const char * kTCCancelHttpTaskKey;
             keyStr = self.URLFull;
         }
     } else if (self.cancelRequestType == TCCancelByURLAndParams){
-        keyStr = [NSString stringWithFormat:@"%@:%@",self.URLFull,params];
+        keyStr = [NSString stringWithFormat:@"%@:%@:%@",self.URLFull,self.URLParams?:@"",params];
     }
     return keyStr;
 }
@@ -688,7 +696,7 @@ static const char * kTCCancelHttpTaskKey;
         }
         @synchronized (limitDic) {
             NSTimeInterval currentTime = CACurrentMediaTime();
-            NSString *keyStr = [NSString stringWithFormat:@"%@:%@",self.URLFull,params];
+            NSString *keyStr = [NSString stringWithFormat:@"%@:%@:%@",self.URLFull,self.URLParams?:@"",params];
             NSNumber *lastTime = limitDic[keyStr];
             if (lastTime && currentTime - lastTime.doubleValue < self.limitRequestInterval) {
                 //限制
@@ -724,10 +732,10 @@ static const char * kTCCancelHttpTaskKey;
     if (!self.params) {
         self->_params = [NSMutableDictionary dictionary];
     }
-    NSObject *postParams = [self.params mutableCopy];
-    [self configRequestParams:postParams];
+    NSObject *requestParams = [self.params mutableCopy];
+    [self configRequestParams:requestParams];
 
-    err = [self checkLimitRequestWithParams:(id)postParams];
+    err = [self checkLimitRequestWithParams:(id)requestParams];
     if (err) {
         [self finishBackThreadExe:^{
             [self handleError:err];
@@ -735,7 +743,7 @@ static const char * kTCCancelHttpTaskKey;
         return;
     }
     NSURLSessionDataTask *cancelTask = nil;
-    NSString *cancelKey = [self checkCancelRequestWithParams:(id)postParams cancel:&cancelTask];
+    NSString *cancelKey = [self checkCancelRequestWithParams:(id)requestParams cancel:&cancelTask];
             
     dispatch_block_t requestBlock = ^{
         void (^removeCancelTask)(NSURLSessionDataTask *) = ^(NSURLSessionDataTask *task) {
@@ -809,10 +817,11 @@ static const char * kTCCancelHttpTaskKey;
         }
         
         NSURLSessionDataTask *sTask = nil;
+        NSString *requestUrl = (!self.URLParams||!self.URLFull) ? self.URLFull : self.URLFull.urlJoinObj(self.URLParams);
         if (self.multipartBlock) {
             //只有post支持上传文件
-            sTask = [currentHttpManager POST:self.URLFull
-                                  parameters:postParams
+            sTask = [currentHttpManager POST:requestUrl
+                                  parameters:requestParams
                                      headers:headers
                    constructingBodyWithBlock:self.multipartBlock
                                     progress:self.progressBlock
@@ -821,38 +830,38 @@ static const char * kTCCancelHttpTaskKey;
         } else {
             switch (self.httpMethod) {
                 case TCHttp_POST:
-                    sTask = [currentHttpManager POST:self.URLFull
-                                          parameters:postParams
+                    sTask = [currentHttpManager POST:requestUrl
+                                          parameters:requestParams
                                              headers:headers
                                             progress:self.progressBlock
                                              success:success
                                              failure:failure];
                     break;
                 case TCHttp_GET:
-                    sTask = [currentHttpManager GET:self.URLFull
-                                         parameters:postParams
+                    sTask = [currentHttpManager GET:requestUrl
+                                         parameters:requestParams
                                             headers:headers
                                            progress:self.progressBlock
                                             success:success
                                             failure:failure];
                     break;
                 case TCHttp_PUT:
-                    sTask = [currentHttpManager PUT:self.URLFull
-                                         parameters:postParams
+                    sTask = [currentHttpManager PUT:requestUrl
+                                         parameters:requestParams
                                             headers:headers
                                             success:success
                                             failure:failure];
                     break;
                 case TCHttp_DELETE:
-                    sTask = [currentHttpManager DELETE:self.URLFull
-                                            parameters:postParams
+                    sTask = [currentHttpManager DELETE:requestUrl
+                                            parameters:requestParams
                                                headers:headers
                                                success:success
                                                failure:failure];
                     break;
                 case TCHttp_PATCH:
-                    sTask = [currentHttpManager PATCH:self.URLFull
-                                           parameters:postParams
+                    sTask = [currentHttpManager PATCH:requestUrl
+                                           parameters:requestParams
                                               headers:headers
                                               success:success
                                               failure:failure];
@@ -861,8 +870,8 @@ static const char * kTCCancelHttpTaskKey;
                     void (^hpSuccess)(NSURLSessionDataTask *) = ^(NSURLSessionDataTask *task) {
                         success(task,@"success");
                     };
-                    sTask = [currentHttpManager HEAD:self.URLFull
-                                          parameters:postParams
+                    sTask = [currentHttpManager HEAD:requestUrl
+                                          parameters:requestParams
                                              headers:headers
                                              success:hpSuccess
                                              failure:failure];
@@ -891,7 +900,7 @@ static const char * kTCCancelHttpTaskKey;
         
         if (self.printLog) {
             NSLog(@"Request begin:\n Request header: %@\n method: %@\n path: %@\n params: %@",
-                  self.httpTask.originalRequest.allHTTPHeaderFields, self.httpTask.originalRequest.HTTPMethod, self.URLFull, postParams);
+                  self.httpTask.originalRequest.allHTTPHeaderFields,self.httpTask.originalRequest.HTTPMethod,requestUrl,requestParams);
         }
         
         //MBProgressHUD show会耗时10毫秒左右，所以放在后面执行

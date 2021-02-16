@@ -94,6 +94,8 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 ///
 /// http请求的url
 @property (nonatomic,copy) NSString *URLFull;
+/// url后面拼接的路径或参数
+@property (nonatomic,strong) NSObject *URLParams;
 /// 执行http请求时传的参数
 @property (nonatomic,strong) NSObject *params;
 /// 一般为http请求的调用者，作用：对象销毁后，其中的所有http请求都会自动取消
@@ -159,8 +161,10 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 /// 初始化，传入拼接好的url
 +(TCBaseApi * (^)(NSString *))apiInitURLFull;
 
-/// 传入url各个组成部分，最后的参数需要传nil。切勿忘记传nil。
+/// 传入url各个组成部分，最后的参数需要传nil。如果url后面要接query参数，可以用urlJoinDic方法拼接。
+/// 例:TCBaseApi.apiInitURLJoin("http:xxxxxx",@"somedata/list".urlJoinDic(@{@"page":@(1)}),nil)
 +(TCBaseApi * (^)(NSString *,...))apiInitURLJoin;
+
 
 //MARK:- toastView相关设置
 
@@ -185,10 +189,13 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 /// 设置http请求参数
 -(TCBaseApi * (^)(NSObject *))l_params;
 
+/// url后面拼接的路径或参数，为了兼容post请求时使用query参数。支持：num、str、dic、array
+-(TCBaseApi * (^)(NSObject *))l_URLParams;
+
 /// 上传文件等使用，通过调用<AFMultipartFormData>formData的appendPartWith...方法来上传data
 -(TCBaseApi * (^)(MultipartBlock))l_multipartBlock;
 
-/// 通用的请求进度的block
+/// 通用的请求进度的block，这个block是AFN在子线程执行的，刷新UI操作需要切换到主线程
 -(TCBaseApi * (^)(ProgressBlock))l_progressBlock;
 
 /// 在解析返回结果之前，对response进行特殊处理，优先级高于deformResponse:,如果return nil，则表示不处理

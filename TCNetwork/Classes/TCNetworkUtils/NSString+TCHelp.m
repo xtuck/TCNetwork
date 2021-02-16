@@ -68,6 +68,41 @@
     };
 }
 
+- (NSString * (^)(NSObject *))urlJoinObj {
+    return ^(NSObject *obj){
+        if ([obj isKindOfClass:NSNumber.class]) {
+            obj = [(NSNumber *)obj stringValue];
+        }
+        if ([obj isKindOfClass:NSString.class]) {
+            return self.l_joinURL((NSString *)obj).toUrlCharacters;
+        } else if ([obj isKindOfClass:NSDictionary.class]) {
+            return self.urlJoinDic((NSDictionary *)obj).toUrlCharacters;
+        } else if ([obj isKindOfClass:NSArray.class]) {
+            NSMutableArray *strArr = [[NSMutableArray alloc] init];
+            NSMutableArray *dicArr = [[NSMutableArray alloc] init];
+            for (NSObject *comp in (NSArray *)obj) {
+                if ([comp isKindOfClass:NSNumber.class]) {
+                    [strArr addObject:[(NSNumber *)comp stringValue]];
+                } else if ([comp isKindOfClass:NSString.class]) {
+                    [strArr addObject:comp];
+                } else if ([comp isKindOfClass:NSDictionary.class]) {
+                    [dicArr addObject:comp];
+                }
+            }
+            NSString *urlJoin = [self copy];
+            if (strArr.count) {
+                [strArr insertObject:urlJoin atIndex:0];
+                urlJoin = [NSString pathWithComponents:strArr];
+            }
+            for (NSDictionary *dic in dicArr) {
+                urlJoin = urlJoin.urlJoinDic(dic);
+            }
+            return urlJoin.toUrlCharacters;
+        }
+        return self;
+    };
+}
+
 - (NSString * (^)(NSString *))l_joinURL {
     return ^(NSString *suffix){
         return [self jointUrlSuffix:suffix];
@@ -75,7 +110,11 @@
 }
 
 - (NSString *)jointUrlSuffix:(NSString *)suffixStr {
-    //return [self stringByAppendingPathComponent:suffixStr?:@""]; //这个方法会把双斜杠变成单斜杠
+    if (suffixStr.isNonEmpty) {
+        return [self stringByAppendingPathComponent:suffixStr]; //这个方法会把双斜杠变成单斜杠
+    }
+    return self;
+    /*
     if ([self hasSuffix:@"/"]) {
         if ([suffixStr hasPrefix:@"/"]) {
             suffixStr = [suffixStr substringFromIndex:1];
@@ -86,6 +125,7 @@
         }
     }
     return [NSString stringWithFormat:@"%@%@",self,suffixStr];
+    */
 }
 
 
