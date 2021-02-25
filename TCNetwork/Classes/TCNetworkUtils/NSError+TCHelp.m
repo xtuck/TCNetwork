@@ -6,8 +6,18 @@
 //
 
 #import "NSError+TCHelp.h"
+#import <objc/runtime.h>
 
 @implementation NSError (TCHelp)
+
+- (NSString *)strCode {
+    return objc_getAssociatedObject(self, _cmd);
+}
+
+- (void)setStrCode:(NSString *)strCode {
+    objc_setAssociatedObject(self, @selector(strCode), strCode, OBJC_ASSOCIATION_COPY_NONATOMIC);
+}
+
 
 + (NSError *)noNetworkError {
     NSError *error = [NSError errorWithDomain:@"TCFailureNoNetwork"
@@ -40,6 +50,7 @@
 
 + (NSError *)responseResultError:(NSString *)code msg:(NSString *)msg {
     NSError *error = [NSError errorWithDomain:@"TCFailureResultUndesirability" code:code.integerValue userInfo:@{NSLocalizedDescriptionKey:msg?:@"Undesirability result"}];
+    error.strCode = code;
     return error;
 }
 
@@ -47,8 +58,15 @@
     NSError *error = [NSError errorWithDomain:@"TCFailureCustomError"
                                          code:code.integerValue
                                      userInfo:@{NSLocalizedDescriptionKey:msg?:@"Unknown Error"}];
+    error.strCode = code;
     return error;
 }
 
++ (NSError *)barrierFailedError {
+    NSError *error = [NSError errorWithDomain:@"TCBarrierFailed"
+                                         code:APIErrorCode_AutoBarrier
+                                     userInfo:@{NSLocalizedDescriptionKey:@"Auto request failed"}];
+    return error;
+}
 
 @end

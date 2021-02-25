@@ -1,6 +1,6 @@
 {
   "name": "TCNetwork",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "summary": "链式编程封装AFNetworking,使得HTTP请求变得更加简洁易用.",
   "description": "TODO: Add long description of the pod here.",
   "homepage": "https://github.com/xtuck/TCNetwork",
@@ -13,7 +13,7 @@
   },
   "source": {
     "git": "https://github.com/xtuck/TCNetwork.git",
-    "tag": "0.1.9"
+    "tag": "0.2.0"
   },
   "platforms": {
     "ios": "9.0"

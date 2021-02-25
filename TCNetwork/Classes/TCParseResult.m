@@ -287,7 +287,7 @@
             } else if ([resultDic isKindOfClass:NSArray.class] || [resultDic isKindOfClass:NSNull.class]){
                 //非字典数据
                 if (err) {
-                    NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 获取非数组数据 \n 当前数据为数组:%@",pKey,resultDic];
+                    NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 获取非数组数据 \n 当前数据为:%@",pKey,resultDic];
                     *err = [NSError errorCode:@"-16816" msg:errMsg];
                 }
                 return nil;
@@ -303,7 +303,7 @@
                 } else if ([resultDic isKindOfClass:NSArray.class] || [resultDic isKindOfClass:NSNull.class]){
                     //非字典数据
                     if (err) {
-                        NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 获取非数组数据 \n 当前数据为数组:%@",pKeyNew,resultDic];
+                        NSString *errMsg = [NSString stringWithFormat:@"parseKey:%@ 获取非数组数据 \n 当前数据为:%@",pKeyNew,resultDic];
                         *err = [NSError errorCode:@"-16817" msg:errMsg];
                     }
                     return nil;

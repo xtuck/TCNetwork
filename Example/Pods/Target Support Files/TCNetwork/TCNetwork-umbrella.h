@@ -10,6 +10,7 @@
 #endif
 #endif
 
+#import "TCApiHelper.h"
 #import "TCBaseApi.h"
 #import "NSError+TCHelp.h"
 #import "NSMutableDictionary+paramsSet.h"

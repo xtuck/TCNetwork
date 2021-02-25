@@ -17,7 +17,7 @@ PODS:
   - Aspects (1.4.1)
   - CocoaSecurity (1.2.4)
   - MBProgressHUD (1.2.0)
-  - TCNetwork (0.1.9):
+  - TCNetwork (0.2.0):
     - AFNetworking
     - Aspects
     - CocoaSecurity
@@ -42,7 +42,7 @@ SPEC CHECKSUMS:
   Aspects: 7595ba96a6727a58ebcbfc954497fc5d2fdde546
   CocoaSecurity: d288a6f87e0f363823d2cb83e753814a6944f71a
   MBProgressHUD: 3ee5efcc380f6a79a7cc9b363dd669c5e1ae7406
-  TCNetwork: 813d2af64d58f98d6bcd6bc6d9516d8dabc7d923
+  TCNetwork: e3cc92222ffda97958c0ac4846290b414835276e
 
 PODFILE CHECKSUM: ae74be093c68c52faf7ae13504a04c618902139a
 

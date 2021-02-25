@@ -90,6 +90,8 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 /// 忽视掉的错误code数组
 @property (nonatomic,copy) NSArray *ignoreErrToastCodeArray;
 
+@property (nonatomic,copy) NSArray *barrierErrCodeArray;
+
 ///MARK: - 接口调用参数配置
 ///
 /// http请求的url
@@ -120,6 +122,11 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 @property (nonatomic,assign) NSTimeInterval requstTimeoutInterval;//默认(kHttpRequestTimeoutInterval=15.0)
 
 @property (nonatomic,strong) dispatch_queue_t finishBackQueue;//结果处理完毕后，通过block返回到调用者时所使用的线程队列
+
+/// 针对某些接口请求失败后，需要调用某个指定接口后，再重新调用该接口，支持多个不同类型的barrier存在
+@property (nonatomic,copy) NSString *barrierType;//MARK:暂不支持多个barrier相互依赖，也未碰到类似业务场景，如有必要再进行扩展
+@property (nonatomic,copy,readonly) NSString *barrierCode;//暂未使用到
+@property (nonatomic,assign) BOOL isBarrierExecuted;//避免出现死循环
 
 ///MARK: - 接口调用后的返回信息
 
@@ -369,5 +376,15 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 
 /// 如果对基类的HTTPManager不满意，可以自己在子类中重写，其他地方需要使用，可以通过类方法来调用
 + (AFHTTPSessionManager *)HTTPManager;
+
+
+/// 针对某些接口请求失败后，需要调用某个指定接口后，再重新调用该接口，支持多个不同类型的barrier存在
+/// 例如：查看个人信息接口返回token过期了，此时可以调用自动调用登录接口，调用成功后，再接着重复调用查看个人信息接口
+- (TCBaseApi *)requestBarrier:(TCBaseApi *)api;
+
+//MARK:暂供TCApiHelper使用
+- (void)prepareRequest;
+- (void)handleError:(NSError *)error;
+- (void)finishBackThreadExe:(dispatch_block_t)block;
 
 @end

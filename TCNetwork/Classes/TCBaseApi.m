@@ -8,6 +8,7 @@
 #import "TCBaseApi.h"
 #import <Aspects/Aspects.h>
 #import <objc/runtime.h>
+#import "TCApiHelper.h"
 
 static const char * kTCCancelHttpTaskKey;
 
@@ -428,7 +429,7 @@ static const char * kTCCancelHttpTaskKey;
         model.parseSource = self.response;
         [model parse];
         if (model.error) {
-            [TCParseResult printDebugLog:[NSString stringWithFormat:@"errCode:%ld\n%@",model.error.code,model.error.localizedDescription]];
+            [TCParseResult printDebugLog:[NSString stringWithFormat:@"errCode:%lld\n%@",model.error.code,model.error.localizedDescription]];
         }
         if (i==0) {
             _resultParseObject = model.parseResult;
@@ -550,6 +551,9 @@ static const char * kTCCancelHttpTaskKey;
 }
 
 - (BOOL)isContainsCode:(NSString *)code arr:(NSArray *)codes {
+    if (!code.isNonEmpty) {
+        return NO;
+    }
     for (int i=0; i<codes.count; i++) {
         NSString *codeStr = codes[i];
         if ([codeStr isKindOfClass:NSNumber.class]) {
@@ -579,8 +583,37 @@ static const char * kTCCancelHttpTaskKey;
 }
 
 - (void)handleError:(NSError *)error {
-    [self stopLoading];
     _error = error;
+    NSString *tempCode = [self fetchErrorCode:error];
+    if (!self.barrierType && !self.isBarrierExecuted && [self isContainsCode:tempCode arr:self.barrierErrCodeArray]) {
+        TCBaseApi *barrierApi = [self requestBarrier:self.weakApi];
+        if (barrierApi) {
+            if (self.printLog) {
+                NSLog(@"执行接口自动调用逻辑:  %@", tempCode);
+            }
+            barrierApi->_barrierCode = tempCode;
+            if (!barrierApi.barrierType) {
+                barrierApi.barrierType = tempCode;
+            }
+            [TCApiHelper addApi:self barrier:barrierApi.barrierType];
+            TCBaseApi *oldBarrierApi = [TCApiHelper fetchBarrier:barrierApi.barrierType];
+            if (!oldBarrierApi) {
+                [TCApiHelper addApi:barrierApi barrier:barrierApi.barrierType];
+                if (barrierApi.apiCallType == TCApiCall_Default) {
+                    barrierApi.apiCall(^(TCBaseApi *api){
+                        [TCApiHelper finishSuccessed:!api.error barrier:api.barrierType];
+                    });
+                } else {
+                    barrierApi.apiCallOriginal(^(TCBaseApi *api){
+                        [TCApiHelper finishSuccessed:!api.error barrier:api.barrierType];
+                    });
+                }
+            }
+            return;
+        }
+    }
+
+    [self stopLoading];
     _isRequesting = NO;
     if (self.printLog) {
         NSLog(@"http error:  %@", error);
@@ -604,12 +637,21 @@ static const char * kTCCancelHttpTaskKey;
     }
 }
 
-- (BOOL)isErrorIgnored {
+- (NSString *)fetchErrorCode:(NSError *)error {
     NSString *tempCode = _code;
-    if (!tempCode.isNonEmpty && [_error isKindOfClass:NSError.class]) {
-        tempCode = [@(_error.code) stringValue];
+    if (!tempCode.isNonEmpty && [error isKindOfClass:NSError.class]) {
+        if (error.strCode.isNonEmpty) {
+            tempCode = error.strCode;
+        } else {
+            tempCode = [@(error.code) stringValue];
+        }
     }
-    if (tempCode.isNonEmpty && [self isContainsCode:tempCode arr:self.ignoreErrToastCodeArray]) {
+    return tempCode;
+}
+
+- (BOOL)isErrorIgnored {
+    NSString *tempCode = [self fetchErrorCode:_error];
+    if ([self isContainsCode:tempCode arr:self.ignoreErrToastCodeArray]) {
         if (self.printLog) {
             NSLog(@"忽略了一个错误提示:  %@", tempCode);
         }
@@ -1072,6 +1114,10 @@ static const char * kTCCancelHttpTaskKey;
 }
 
 - (NSError *)requestFinish:(TCBaseApi *)api {
+    return nil;
+}
+
+- (TCBaseApi *)requestBarrier:(TCBaseApi *)api {
     return nil;
 }
 

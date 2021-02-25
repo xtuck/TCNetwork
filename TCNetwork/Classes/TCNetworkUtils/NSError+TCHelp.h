@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 
 typedef NS_ENUM(NSInteger,TCCustomApiErrorCode) {
+    APIErrorCode_AutoBarrier=-1968,           //自动处理接口失败
     APIErrorCode_IgnoreError=-1969,           //忽略掉的错误
     APIErrorCode_NoNetwork=-1970,             //没有网络
     APIErrorCode_HttpMethodError=-1971,       //请求方法设置错误
@@ -17,6 +18,8 @@ typedef NS_ENUM(NSInteger,TCCustomApiErrorCode) {
 };
 
 @interface NSError (TCHelp)
+
+@property (nonatomic, copy) NSString *strCode;
 
 + (NSError *)noNetworkError;
 
@@ -30,5 +33,7 @@ typedef NS_ENUM(NSInteger,TCCustomApiErrorCode) {
 
 //自定义构造error
 + (NSError *)errorCode:(NSString *)code msg:(NSString *)msg;
+
++ (NSError *)barrierFailedError;
 
 @end
