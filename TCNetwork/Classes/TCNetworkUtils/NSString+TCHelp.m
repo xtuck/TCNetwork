@@ -43,6 +43,39 @@
     return urlStr;
 }
 
+- (NSString *)tc_URLEncode {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored"-Wdeprecated-declarations"
+    return (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
+                                                                                 (CFStringRef)self,
+                                                                                 (CFStringRef)@"!$&'()*+,-./:;=?@_~%#[]",
+                                                                                 NULL,
+                                                                                 kCFStringEncodingUTF8));
+#pragma clang diagnostic pop
+}
+
+- (NSString *)tc_URLDecode {
+    if ([self respondsToSelector:@selector(stringByRemovingPercentEncoding)]) {
+        return [self stringByRemovingPercentEncoding];
+    } else {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        CFStringEncoding en = CFStringConvertNSStringEncodingToEncoding(NSUTF8StringEncoding);
+        NSString *decoded = [self stringByReplacingOccurrencesOfString:@"+"
+                                                            withString:@" "];
+        decoded = (__bridge_transfer NSString *)
+        CFURLCreateStringByReplacingPercentEscapesUsingEncoding(
+                                                                NULL,
+                                                                (__bridge CFStringRef)decoded,
+                                                                CFSTR(""),
+                                                                en);
+        return decoded;
+#pragma clang diagnostic pop
+    }
+}
+
+
+
 - (NSString * (^)(NSDictionary *))urlJoinDic {
     return ^(NSDictionary *params){
         if (!params.count) {

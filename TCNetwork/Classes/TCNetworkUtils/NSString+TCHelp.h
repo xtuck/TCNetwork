@@ -29,6 +29,9 @@ NS_ASSUME_NONNULL_BEGIN
 //url取消转换
 - (NSString *)undoUrlCharacters;
 
+- (NSString *)tc_URLEncode;
+- (NSString *)tc_URLDecode;
+
 //url拼接字典参数，需要确保调用者str不为nil
 - (NSString * (^)(NSDictionary *))urlJoinDic;
 + (NSString * (^)(NSDictionary *))urlJoinDic;
