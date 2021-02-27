@@ -46,8 +46,7 @@ Https请求调试不通的时候，需要在info.plist中配置
     <true/>
 </dict>
 ```
-1·通过继承TCBaseApi，创建自己的api基类，在自己的api基类中编写通用配置和通用的处理逻辑。
-  需要调用http请求时，创建api接口类，继承自己的api基类。或者直接使用基类进行请求。
+1·通过继承TCBaseApi，创建自己的api基类，在自己的api基类中编写通用配置和通用的处理逻辑。    需要调用http请求时，创建api接口类，继承自己的api基类。或者直接使用基类进行请求。  
   自定义基类参考demo中的“MyBaseApi”类或者“TCCoinBaseApi”类，接口请求类参考demo中的“CheckVersionApi”类。  
   不需要重写的父类方法可以不写，调用接口请求时，不需要的参数可以不传。
 ###
@@ -110,7 +109,7 @@ TCMyBaseApi.apiInitURLJoin(TCApiConfig.kApiBaseUrl,@"navigation",nil)
 .l_loadOnView(self.view)
 .apiCallSuccess(^(TCMyBaseApi *api) {
     self.mapPModel = api.resultParseObject;
-    //
+    //调用刷新UI逻辑
 });
 
 ```
@@ -139,5 +138,5 @@ TCBaseApi解析的返回数据，默认格式为NSDictionary，如果返回数�
 1，通过链式编程的方式传递参数和调用方法，使得代码简洁又灵活，而且保持了接口调用的一致性，使得因编码造成的出错率非常小。  
 2，统一了请求中的toast相关的调用和显示，不必关心如何显示以及显示和隐藏的配对，大大的简化了代码。  
 3，自定义DSL解析返回数据，也是大大的简化了代码。(解析参数：l_parseModelClass_parseKey(,))。  
-4，实现了接口调用失败后需调用指定接口后，再重新调用该失败接口的相关逻辑。
+4，实现了接口调用失败后需调用指定接口后，再重新调用该失败接口的相关逻辑。  
 5，更多的优点，请在使用中去感受吧。
