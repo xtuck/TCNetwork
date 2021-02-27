@@ -53,7 +53,7 @@ Https请求调试不通的时候，需要在info.plist中配置
 ###
 
 ```
-//基类的主要设置，继承TCBaseApi，与TCBaseApi中相同的配置，可以省略
+//基类的主要设置，继承TCBaseApi，与TCBaseApi中相同的配置，可以省略。参考"MyBaseApi.m"
 //可以重写 -(void)apiCustomConfig 方法统一设置
 
 
@@ -101,6 +101,18 @@ Https请求调试不通的时候，需要在info.plist中配置
     });
 }
 
+//直接创建接口并调用
+NSMutableDictionary *params = NSMutableDictionary.maker;
+params.addKV(@"organId",self.params[@"id"]);
+TCMyBaseApi.apiInitURLJoin(TCApiConfig.kApiBaseUrl,@"navigation",nil)
+.l_httpMethod(TCHttp_GET).l_params(params)
+.l_parseModelClass(TCMapPositionModel.class)
+.l_loadOnView(self.view)
+.apiCallSuccess(^(TCMyBaseApi *api) {
+    self.mapPModel = api.resultParseObject;
+    //
+});
+
 ```
 
 2·通过非继承的方式调用TCBaseApi
@@ -122,10 +134,10 @@ TCBaseApi.apiInitURLFull(<FullUrlStr>).l_params(<paramsDic>).apiCall(^(TCBaseApi
 TCBaseApi中的HTTPManager是单例，如果不重写HTTPManager方法，在不同接口需要对manager进行差异化配置时，注意正确设置manager在不同接口下对应的配置  
 若是未设置SessionManager的completionQueue和api的finishBackQueue，请求的返回数据会被切换到主线程返回，即：无论是主线程调用请求还是子线程调用请求，请求结果都会在主线程返回  
 TCBaseApi解析的返回数据，默认格式为NSDictionary，如果返回数据为其他格式，请调用.apiCallOriginal()自行解析返回数据  
-可参考“UseApiExample”目录下的方案使用TCBaseApi  
 
 # 本框架的优势
-1，通过链式编程的方式传递参数和调用方法，使得代码简洁又灵活，而且保持了接口调用的一致性，使得因编码造成的出错率更小。  
+1，通过链式编程的方式传递参数和调用方法，使得代码简洁又灵活，而且保持了接口调用的一致性，使得因编码造成的出错率非常小。  
 2，统一了请求中的toast相关的调用和显示，不必关心如何显示以及显示和隐藏的配对，大大的简化了代码。  
 3，自定义DSL解析返回数据，也是大大的简化了代码。(解析参数：l_parseModelClass_parseKey(,))。  
-4，更多的优点，请在使用中去感受吧。
+4，实现了接口调用失败后需调用指定接口后，再重新调用该失败接口的相关逻辑。
+5，更多的优点，请在使用中去感受吧。

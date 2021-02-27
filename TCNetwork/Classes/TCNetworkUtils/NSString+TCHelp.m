@@ -32,15 +32,11 @@
 }
 
 - (NSString *)toUrlCharacters {
-    NSString *urlStr = [self copy];
-    urlStr = [urlStr stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
-    return urlStr;
+    return [self stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]];
 }
 
 - (NSString *)undoUrlCharacters {
-    NSString *urlStr = [self copy];
-    urlStr = [urlStr stringByRemovingPercentEncoding];
-    return urlStr;
+    return [self stringByRemovingPercentEncoding];
 }
 
 - (NSString *)tc_URLEncode {
