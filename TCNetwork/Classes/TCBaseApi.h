@@ -221,8 +221,10 @@ typedef NSDictionary * (^DeformResponseBlock) (id oResponse);//对返回的原�
 /// 设置http请求的method,不设置的话，默认是post
 -(TCBaseApi * (^)(TCHttpMethod method))l_httpMethod;
 
-/// 设置http请求requstSerializer类型，超时时间 == kHttpRequestTimeoutInterval
+/// 设置http请求requstSerializer类型
 -(TCBaseApi * (^)(TCRequstSerializerType))l_requestSerializerType;
+/// 设置http请求超时时间，默认：kHttpRequestTimeoutInterval
+-(TCBaseApi * (^)(NSTimeInterval))l_requestTimeout;
 /// 设置http请求requstSerializer类型和超时时间
 -(TCBaseApi * (^)(TCRequstSerializerType,NSTimeInterval))l_requestSerializerType_timeout;
 

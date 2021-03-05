@@ -254,7 +254,15 @@ static const char * kTCCancelHttpTaskKey;
 
 -(TCBaseApi * (^)(TCRequstSerializerType))l_requestSerializerType {
     return ^(TCRequstSerializerType l_requestSerializerType){
-        return self.l_requestSerializerType_timeout(l_requestSerializerType,kHttpRequestTimeoutInterval);
+        self.requstSerializerType = l_requestSerializerType;
+        return self;
+    };
+}
+
+-(TCBaseApi * (^)(NSTimeInterval))l_requestTimeout {
+    return ^(NSTimeInterval l_requestTimeout){
+        self.requstTimeoutInterval = l_requestTimeout;
+        return self;
     };
 }
 
@@ -839,6 +847,11 @@ static const char * kTCCancelHttpTaskKey;
 
         AFHTTPSessionManager *currentHttpManager = self.customHttpManager ? : [self.class HTTPManager];
         @synchronized (currentHttpManager) {
+            if (self.configHttpManagerBlock) {
+                self.configHttpManagerBlock(currentHttpManager);
+            } else {
+                [self configHttpManager:currentHttpManager];
+            }
             if (self.requstSerializerType == TCRequest_HTTP) {
                 if (![currentHttpManager.requestSerializer isMemberOfClass:AFHTTPRequestSerializer.class]) {
                     currentHttpManager.requestSerializer = [AFHTTPRequestSerializer serializer];
@@ -850,11 +863,6 @@ static const char * kTCCancelHttpTaskKey;
             }
             if (currentHttpManager.requestSerializer.timeoutInterval != self.requstTimeoutInterval) {
                 currentHttpManager.requestSerializer.timeoutInterval = self.requstTimeoutInterval;
-            }
-            if (self.configHttpManagerBlock) {
-                self.configHttpManagerBlock(currentHttpManager);
-            } else {
-                [self configHttpManager:currentHttpManager];
             }
         }
         
