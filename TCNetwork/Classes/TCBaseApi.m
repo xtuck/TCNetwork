@@ -437,7 +437,7 @@ static const char * kTCCancelHttpTaskKey;
         model.parseSource = self.response;
         [model parse];
         if (model.error) {
-            [TCParseResult printDebugLog:[NSString stringWithFormat:@"errCode:%lld\n%@",model.error.code,model.error.localizedDescription]];
+            [TCParseResult printDebugLog:[NSString stringWithFormat:@"errCode:%ld\n%@",(long)model.error.code,model.error.localizedDescription]];
         }
         if (i==0) {
             _resultParseObject = model.parseResult;

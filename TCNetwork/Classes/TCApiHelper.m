@@ -8,7 +8,7 @@
 #import "TCApiHelper.h"
 #import "TCBaseApi.h"
 
-static NSCache *sApisCache = nil;
+static NSMutableDictionary *sApisCache = nil;
 
 static const NSString *kAllBarrierApiKey = @"kAllBarrierApiKey";
 
@@ -18,9 +18,9 @@ static const NSString *kAllBarrierApiKey = @"kAllBarrierApiKey";
     sApisCache = nil;
 }
 
-+ (NSCache *)apiCache {
++ (NSMutableDictionary *)apiCache {
     if (!sApisCache) {
-        sApisCache = [[NSCache alloc] init];
+        sApisCache = [[NSMutableDictionary alloc] init];
     }
     return sApisCache;
 }
